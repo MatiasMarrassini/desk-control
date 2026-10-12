@@ -119,10 +119,12 @@ Al elegir uno se le pone nombre y se guarda.
   Un `[4,{...}]` muestra un aviso y vuelve el control al último valor confirmado.
 - Si la conexión se corta de forma inesperada, el widget pasa a "en espera" sin perder los valores mostrados.
 
-**Lista de fuentes:** se obtiene con el comando de archivos `ls`. **Su respuesta no está verificada todavía.**
-Lo primero de la implementación es una prueba de solo lectura para conocer el formato. Si `ls` no sirve,
-la alternativa es recorrer las fuentes con `CurrentSoundPackageNo` leyendo cada `fontname`,
-pero cambia la fuente activa y debe restaurarse al terminar. Los nombres se guardan en caché en `config.json`.
+**Lista de fuentes (verificado):** `ls "/"` devuelve el rango de carpetas (`[1,16]`) y `fontname "/N"` el nombre
+de cada una. Es solo lectura y tarda unos 3 s para 16 fuentes (ver `pruebas/listar_fuentes.py` y PROTOCOLO.md).
+Se pide la primera vez que se conecta a un sable y se guarda en caché en `config.json`. Se puede refrescar a mano
+y también se vuelve a pedir si `TotalSoundPackage` no coincide con la caché.
+**Numeración:** `CurrentSoundPackageNo` cuenta desde 0 y las carpetas desde 1 (carpeta = n + 1).
+La interfaz muestra la numeración desde 1, como las carpetas.
 
 ## 7. Errores
 

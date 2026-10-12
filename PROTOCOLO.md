@@ -18,7 +18,13 @@ Obtenido decompilando Xeno Configurator para Android (`com.xeno.configurator`, c
 > **Configuración por fuente:** `BackgroundColor`, efectos (`CurrentClash`, `CurrentBlaster`…), `CurrentLightEffect`,
 > `PreonTime`, `OnTime` y `OffTime` son **propios de cada fuente de sonido**. Al enviar `CurrentSoundPackageNo` el sable
 > responde con todos esos valores de la fuente elegida (en un solo `[3,{...}]` en `dae1`).
-> `Volume` y `Brightness` son globales. La numeración de las fuentes empieza en 0 o en 1 (ver `TotalSoundPackage`).
+> `Volume` y `Brightness` son globales.
+>
+> **Lista de fuentes (verificado):** `[2,{"ls":"/"}]` responde con un **rango** de carpetas, `[3,{"ls":[1,16]}]`.
+> Luego, por cada carpeta, `[2,{"fontname":"/N"}]` responde `[3,{"fontname":["/N","Nombre"]}]`. Las respuestas
+> llegan por `3ab1` en unos 120–240 ms cada una, y es solo lectura.
+> **Ojo con la numeración:** `CurrentSoundPackageNo` cuenta **desde 0** y las carpetas **desde 1**
+> (carpeta = `CurrentSoundPackageNo` + 1). Una ruta inexistente en `ls` responde `null`.
 >
 > **Batería (`Power`):** parece calcularse a partir del voltaje. Con la hoja encendida marcó 70 %; en reposo,
 > unos minutos después, 77 %. La carga hace caer el voltaje, así que la lectura fiable es con la hoja apagada.
