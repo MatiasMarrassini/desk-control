@@ -1,0 +1,23 @@
+# Código y binarios de terceros (no redistribuir)
+*.apk
+analisis/
+herramientas/
+
+# Datos de mis sesiones (número de serie y dirección del sable)
+logs/
+
+# Archivos temporales de las maquetas
+.superpowers/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+dist/
+build/
+*.spec
+
+# Sistema
+Thumbs.db
+desktop.ini

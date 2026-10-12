@@ -1,0 +1,165 @@
+<h2>Parte 2 · Estados del sable y pantalla de búsqueda</h2>
+<p class="subtitle">Arriba: cómo se ve la pestaña Sable en cada situación. Abajo: la pantalla para buscar y guardar dispositivos. (Versiones reducidas del widget.)</p>
+
+<style>
+  .m { width: 250px; height: 410px; border-radius: 16px; background: rgba(28,28,32,.95); border: 1px solid rgba(255,255,255,.08);
+       color: #e8e8ea; font-family: "Segoe UI Variable","Segoe UI",sans-serif; overflow: hidden; position: relative;
+       display: flex; flex-direction: column; --c: 0,255,0; font-size: 12px; }
+  .m .top { display: flex; align-items: center; gap: 4px; padding: 10px 10px 6px; }
+  .m .tab { padding: 4px 9px; border-radius: 999px; font-size: 10px; color: #9a9aa2; }
+  .m .tab.on { background: rgba(255,255,255,.08); color: #fff; }
+  .m .g { flex: 1; }
+  .m .st { font-size: 10px; color: #9a9aa2; display: flex; align-items: center; gap: 4px; }
+  .m .d { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .m .body { display: flex; gap: 10px; padding: 4px 10px 10px; flex: 1; }
+  .m .sab { width: 46px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+  .m .bl { width: 6px; height: 250px; border-radius: 999px; background: #fff;
+           box-shadow: 0 0 5px 2px rgba(var(--c),.9), 0 0 16px 5px rgba(var(--c),.5), 0 0 40px 10px rgba(var(--c),.22); }
+  .m .bl.off { background: transparent; box-shadow: none; border: 1px dashed rgba(255,255,255,.12); }
+  .m .bl.pulse { background: transparent; box-shadow: none; border: 1px solid rgba(var(--c),.5); animation: pz 1.4s ease-in-out infinite; }
+  @keyframes pz { 50% { border-color: rgba(var(--c),.1); box-shadow: 0 0 14px rgba(var(--c),.25); } }
+  .m .hl { width: 12px; height: 74px; background: linear-gradient(90deg,#3a3a3f,#8d8d95 45%,#4a4a50); border-radius: 2px; }
+  .m .cs { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .m .cd { background: rgba(255,255,255,.04); border-radius: 10px; padding: 7px 9px; }
+  .m .lb { font-size: 9px; color: #8a8a92; text-transform: uppercase; letter-spacing: .05em; display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .m .lb b { color: #ddd; letter-spacing: 0; }
+  .m .bar { height: 4px; border-radius: 4px; background: rgba(255,255,255,.1); position: relative; }
+  .m .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: rgb(var(--c)); }
+  .m .pw { width: 42px; height: 42px; border-radius: 50%; margin: 2px auto; display: flex; align-items: center; justify-content: center;
+           font-size: 18px; background: rgba(255,255,255,.07); color: #888; }
+  .m .pw.on { background: rgba(var(--c),.18); color: rgb(var(--c)); box-shadow: 0 0 14px rgba(var(--c),.4); }
+  .m .dots { display: flex; gap: 5px; flex-wrap: wrap; } .m .dots i { width: 14px; height: 14px; border-radius: 50%; }
+  .m .dim { opacity: .45; filter: grayscale(.6); }
+  .m .banner { margin: 0 10px 6px; padding: 7px 9px; border-radius: 10px; font-size: 11px; display: flex; gap: 6px; align-items: center; }
+  .m .btn { background: rgba(255,255,255,.08); border-radius: 8px; padding: 5px 10px; font-size: 11px; display: inline-block; }
+  .m .spin { width: 12px; height: 12px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: sp .8s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .cap { font-size: 13px; margin-top: 8px; } .cap b { display: block; margin-bottom: 2px; } .cap span { color: #888; font-size: 12px; }
+  .row4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 22px; justify-items: center; margin-bottom: 34px; }
+
+  /* busqueda */
+  .scan { width: 380px; height: 520px; }
+  .scan h4 { margin: 4px 14px 2px; font-size: 15px; font-weight: 600; }
+  .scan .sub { margin: 0 14px 10px; color: #8a8a92; font-size: 11px; }
+  .scan .sec { margin: 8px 14px 4px; font-size: 10px; color: #8a8a92; text-transform: uppercase; letter-spacing: .06em; display: flex; align-items: center; gap: 6px; }
+  .dev { margin: 0 10px 6px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,.04); display: flex; align-items: center; gap: 10px; }
+  .dev .ic { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .dev .nm { flex: 1; } .dev .nm b { font-size: 13px; display: block; } .dev .nm small { color: #8a8a92; font-size: 10px; }
+  .sig { display: inline-flex; gap: 1px; align-items: flex-end; height: 10px; margin-right: 3px; vertical-align: -1px; }
+  .sig i { width: 2px; background: #666; border-radius: 1px; } .sig i.f { background: #4ade80; }
+  .dev .add { background: rgba(74,222,128,.15); color: #4ade80; border-radius: 8px; padding: 6px 10px; font-size: 11px; font-weight: 600; }
+  .dev .saved { color: #8a8a92; font-size: 11px; }
+  .edit { margin: 0 10px 6px; padding: 10px; border-radius: 12px; border: 1px solid rgba(74,222,128,.35); background: rgba(74,222,128,.05); }
+  .edit .in { margin-top: 6px; background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 6px 8px; font-size: 12px; }
+</style>
+
+<h3>Estados de la pestaña Sable</h3>
+<div class="row4">
+  <!-- 1 desconectado -->
+  <div>
+    <div class="m" style="--c:0,255,0">
+      <div class="top"><span class="tab on">⚔ Mi sable</span><span class="tab">💡 Luces</span><span class="g"></span><span class="st"><span class="d" style="background:#777"></span>en espera</span></div>
+      <div class="body">
+        <div class="sab"><div class="bl off"></div><div class="hl"></div></div>
+        <div class="cs">
+          <div class="pw">⏻</div>
+          <div class="cd"><div class="lb">Color</div><div class="dots"><i style="background:#f00"></i><i style="background:#05f"></i><i style="background:#0f0;outline:2px solid #fff;outline-offset:1px"></i><i style="background:#a0f"></i></div></div>
+          <div class="cd"><div class="lb">Volumen <b>20%</b></div><div class="bar"><i style="width:20%"></i></div></div>
+          <div class="cd"><div class="lb">Brillo <b>100%</b></div><div class="bar"><i style="width:100%"></i></div></div>
+          <div class="cd" style="text-align:center"><b>The Princess</b> ▾<br><span style="color:#888;font-size:10px">Fuente 13 de 16</span></div>
+        </div>
+      </div>
+      <div style="text-align:center;color:#777;font-size:10px;padding-bottom:8px">Últimos valores conocidos · hace 5 min</div>
+    </div>
+    <div class="cap"><b>1 · En espera (normal)</b><span>No hay conexión abierta, pero muestra los últimos valores conocidos. Todo se puede tocar: al usar algo, conecta solo.</span></div>
+  </div>
+
+  <!-- 2 conectando -->
+  <div>
+    <div class="m" style="--c:0,255,0">
+      <div class="top"><span class="tab on">⚔ Mi sable</span><span class="tab">💡 Luces</span><span class="g"></span><span class="st"><span class="spin"></span>conectando</span></div>
+      <div class="banner" style="background:rgba(255,255,255,.05)"><span class="spin"></span>Conectando… intento 1 de 3</div>
+      <div class="body">
+        <div class="sab"><div class="bl pulse" style="height:226px"></div><div class="hl"></div></div>
+        <div class="cs dim">
+          <div class="pw">⏻</div>
+          <div class="cd"><div class="lb">Color</div><div class="dots"><i style="background:#f00"></i><i style="background:#05f"></i><i style="background:#0f0"></i><i style="background:#a0f"></i></div></div>
+          <div class="cd"><div class="lb">Volumen <b>20%</b></div><div class="bar"><i style="width:20%"></i></div></div>
+          <div class="cd"><div class="lb">Brillo <b>100%</b></div><div class="bar"><i style="width:100%"></i></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cap"><b>2 · Conectando (3–5 s)</b><span>La silueta de la hoja "respira" mientras conecta. La orden que tocaste queda en cola y se envía apenas conecta.</span></div>
+  </div>
+
+  <!-- 3 no encontrado -->
+  <div>
+    <div class="m" style="--c:0,255,0">
+      <div class="top"><span class="tab on">⚔ Mi sable</span><span class="tab">💡 Luces</span><span class="g"></span><span class="st"><span class="d" style="background:#f87171"></span>sin señal</span></div>
+      <div class="banner" style="background:rgba(248,113,113,.12);color:#fca5a5;flex-direction:column;align-items:flex-start">
+        <span>No encontré el sable.</span>
+        <span style="color:#aaa;font-size:10px">¿Está encendido y cerca? ¿Conectado al iPhone?</span>
+        <span class="btn" style="margin-top:4px;color:#fff">Reintentar</span>
+      </div>
+      <div class="body">
+        <div class="sab"><div class="bl off" style="height:200px"></div><div class="hl"></div></div>
+        <div class="cs dim">
+          <div class="pw">⏻</div>
+          <div class="cd"><div class="lb">Volumen <b>20%</b></div><div class="bar"><i style="width:20%"></i></div></div>
+          <div class="cd"><div class="lb">Brillo <b>100%</b></div><div class="bar"><i style="width:100%"></i></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cap"><b>3 · No encontrado</b><span>Tras 3 intentos fallidos. Explica las causas típicas (apagado, lejos, conectado al teléfono) y ofrece reintentar.</span></div>
+  </div>
+
+  <!-- 4 conectado batería baja -->
+  <div>
+    <div class="m" style="--c:0,80,255">
+      <div class="top"><span class="tab on">⚔ Mi sable</span><span class="tab">💡 Luces</span><span class="g"></span><span class="st" style="color:#fbbf24"><span class="d" style="background:#fbbf24"></span>🔋 14%</span></div>
+      <div class="banner" style="background:rgba(251,191,36,.12);color:#fcd34d">🔋 Batería baja: cargá el sable pronto</div>
+      <div class="body">
+        <div class="sab"><div class="bl" style="height:226px"></div><div class="hl"></div></div>
+        <div class="cs">
+          <div class="pw on">⏻</div>
+          <div class="cd"><div class="lb">Color</div><div class="dots"><i style="background:#f00"></i><i style="background:#05f;outline:2px solid #fff;outline-offset:1px"></i><i style="background:#0f0"></i><i style="background:#a0f"></i></div></div>
+          <div class="cd"><div class="lb">Volumen <b>20%</b></div><div class="bar"><i style="width:20%"></i></div></div>
+          <div class="cd"><div class="lb">Brillo <b>100%</b></div><div class="bar"><i style="width:100%"></i></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cap"><b>4 · Conectado, batería baja</b><span>Punto verde normalmente; en amarillo y con aviso si baja del 20%. (Se lee con la hoja apagada para que sea fiable.)</span></div>
+  </div>
+</div>
+
+<h3>Pantalla "Buscar dispositivos"</h3>
+<div style="display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap;justify-content:center">
+  <div class="m scan">
+    <div class="top"><span class="tab">← Volver</span><span class="g"></span><span class="st"><span class="spin"></span>buscando…</span></div>
+    <h4>Agregar dispositivo</h4>
+    <div class="sub">Se abre desde el ícono de la bandeja o con el botón ＋ junto a las pestañas.</div>
+
+    <div class="sec">Guardados</div>
+    <div class="dev"><div class="ic">⚔</div><div class="nm"><b>Mi sable</b><small><span class="sig"><i class="f" style="height:3px"></i><i class="f" style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i></span>Xeno3 · Bluetooth</small></div><span class="saved">✓ guardado</span></div>
+
+    <div class="sec">Encontrados cerca</div>
+    <div class="edit">
+      <div style="display:flex;align-items:center;gap:10px"><div class="ic" style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center">⚔</div>
+        <div style="flex:1"><b style="font-size:13px">Saber</b><br><small style="color:#8a8a92;font-size:10px">Xeno3 · Bluetooth · F4:65:…</small></div></div>
+      <div class="in">Nombre: <b>Sable de Obi-Wan</b>▏</div>
+      <div style="text-align:right;margin-top:8px"><span class="btn">Cancelar</span> <span class="btn" style="background:rgba(74,222,128,.2);color:#4ade80">Guardar</span></div>
+    </div>
+    <div class="dev" style="opacity:.55"><div class="ic">💡</div><div class="nm"><b>Wiz A19 · 192.168.0.23</b><small>Foco Wiz · WiFi</small></div><span class="saved">próximamente</span></div>
+    <div class="dev" style="opacity:.55"><div class="ic">💡</div><div class="nm"><b>Wiz A19 · 192.168.0.24</b><small>Foco Wiz · WiFi</small></div><span class="saved">próximamente</span></div>
+  </div>
+  <div style="max-width:300px;font-size:13px;color:#bbb;line-height:1.55">
+    <p><b style="color:#fff">Cómo funciona:</b></p>
+    <ul style="padding-left:18px">
+      <li>Busca a la vez <b>sables</b> (Bluetooth, solo los que tienen los servicios Xeno) y, en la etapa 2, <b>focos Wiz</b> (WiFi).</li>
+      <li>Solo muestra dispositivos <b>compatibles</b>: nada de teles, pulseras ni AirPods.</li>
+      <li>Tocás uno, le ponés nombre y <b>Guardar</b> → aparece como pestaña o tarjeta.</li>
+      <li>Los guardados se pueden renombrar o quitar desde acá.</li>
+      <li>Las barras indican la <b>señal</b> (útil con tu sable de señal débil).</li>
+    </ul>
+  </div>
+</div>

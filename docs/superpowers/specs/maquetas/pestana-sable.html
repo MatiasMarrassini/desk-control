@@ -1,0 +1,138 @@
+<h2>Pestaña del sable — opción A, versión 2</h2>
+<p class="subtitle">Con tus cambios: colores comunes + 🌈 que abre la rueda RGB, porcentajes en volumen y brillo, y lista desplegable de fuentes. Todo es interactivo.</p>
+
+<style>
+  .w { width: 380px; height: 600px; border-radius: 18px; background: rgba(28,28,32,.94);
+       border: 1px solid rgba(255,255,255,.08); box-shadow: 0 20px 60px rgba(0,0,0,.5);
+       color: #e8e8ea; font-family: "Segoe UI Variable", "Segoe UI", sans-serif; overflow: hidden;
+       display: flex; flex-direction: column; margin: 0 auto; position: relative; --c: 0,255,0; }
+  .top { display: flex; align-items: center; gap: 6px; padding: 12px 14px 8px; }
+  .tab { padding: 6px 12px; border-radius: 999px; font-size: 12px; color: #9a9aa2; }
+  .tab.on { background: rgba(255,255,255,.08); color: #fff; }
+  .grow { flex: 1; }
+  .bat { font-size: 11px; color: #9a9aa2; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 4px; }
+  .lbl { font-size: 11px; color: #8a8a92; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;
+         display: flex; justify-content: space-between; }
+  .lbl b { color: #e8e8ea; font-weight: 600; letter-spacing: 0; font-size: 12px; }
+  .card { background: rgba(255,255,255,.04); border-radius: 12px; padding: 10px 12px; }
+  .sw { display: flex; gap: 9px; flex-wrap: wrap; }
+  .sw i { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .sw i:hover { transform: scale(1.15); }
+  .sw i.sel { box-shadow: 0 0 0 2px #1c1c20, 0 0 0 4px #fff; }
+  .sw i.rb { background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red); }
+  input[type=range] { width: 100%; accent-color: rgb(var(--c)); }
+  .pwr { width: 58px; height: 58px; border-radius: 50%; border: none; cursor: pointer; font-size: 24px;
+         background: rgba(255,255,255,.07); color: #aaa; transition: all .3s; }
+  .w.lit .pwr { background: rgba(var(--c),.18); color: rgb(var(--c)); box-shadow: 0 0 18px rgba(var(--c),.45); }
+  .font { display: flex; align-items: center; gap: 6px; }
+  .font .name { flex: 1; text-align: center; cursor: pointer; border-radius: 8px; padding: 2px 0; }
+  .font .name:hover { background: rgba(255,255,255,.05); }
+  .font b { font-weight: 600; font-size: 14px; }
+  .font small { color: #8a8a92; font-size: 11px; }
+  .arr { background: rgba(255,255,255,.06); border: none; color: #ddd; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; }
+
+  .stage { display: flex; gap: 14px; padding: 6px 14px 14px; flex: 1; min-height: 0; }
+  .saber { width: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+  .blade { width: 9px; height: 360px; border-radius: 999px; background: #fff; transform-origin: bottom; transform: scaleY(0);
+           transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .2s, box-shadow .3s;
+           box-shadow: 0 0 6px 2px rgba(var(--c),.9), 0 0 22px 6px rgba(var(--c),.55), 0 0 60px 14px rgba(var(--c),.25); }
+  .w:not(.lit) .blade { opacity: 0; }
+  .w.lit .blade { transform: scaleY(1); animation: hum 2.4s ease-in-out infinite; }
+  @keyframes hum { 50% { box-shadow: 0 0 7px 2px rgba(var(--c),1), 0 0 26px 8px rgba(var(--c),.6), 0 0 70px 18px rgba(var(--c),.3); } }
+  .hilt { width: 18px; height: 110px; background: linear-gradient(90deg,#3a3a3f,#8d8d95 45%,#4a4a50); border-radius: 3px; }
+  .ctrls { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+  /* popovers */
+  .pop { position: absolute; left: 96px; right: 14px; background: #26262b; border: 1px solid rgba(255,255,255,.1);
+         border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,.6); padding: 12px; z-index: 5;
+         opacity: 0; transform: translateY(-6px) scale(.98); pointer-events: none; transition: all .18s ease-out; }
+  .pop.open { opacity: 1; transform: none; pointer-events: auto; }
+  .wheel { width: 190px; height: 190px; border-radius: 50%; margin: 4px auto 10px; cursor: crosshair; position: relative;
+           background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 70%), conic-gradient(from 90deg, red, yellow, lime, cyan, blue, magenta, red); }
+  .wheel .knob { position: absolute; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff;
+                 box-shadow: 0 0 4px #000; transform: translate(-50%,-50%); left: 50%; top: 50%; pointer-events: none; }
+  .prev { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; }
+  .prev span { width: 18px; height: 18px; border-radius: 50%; background: rgb(var(--c)); }
+  .list { max-height: 300px; overflow: auto; margin: -4px; }
+  .list div { padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; gap: 10px; }
+  .list div:hover { background: rgba(255,255,255,.06); }
+  .list div.cur { background: rgba(var(--c),.15); color: #fff; }
+  .list small { color: #77777f; width: 18px; text-align: right; }
+</style>
+
+<div class="mockup" style="max-width:460px;margin:0 auto">
+  <div class="mockup-header">Widget · pestaña Sable</div>
+  <div class="mockup-body" style="background:#111;padding:20px">
+    <div class="w" id="w">
+      <div class="top"><span class="tab on">⚔ Sable</span><span class="tab">💡 Luces</span><span class="grow"></span><span class="bat"><span class="dot"></span>77%</span></div>
+      <div class="stage">
+        <div class="saber"><div class="blade"></div><div class="hilt"></div></div>
+        <div class="ctrls">
+          <div style="display:flex;justify-content:center;padding:4px 0"><button class="pwr" id="pwr">⏻</button></div>
+          <div class="card"><div class="lbl">Color</div><div class="sw" id="sw"></div></div>
+          <div class="card"><div class="lbl">Volumen <b id="vv">20%</b></div><input type="range" id="vol" value="20"></div>
+          <div class="card"><div class="lbl">Brillo <b id="bv">100%</b></div><input type="range" id="bri" value="100"></div>
+          <div class="card font"><button class="arr" id="prev">‹</button>
+            <div class="name" id="fname" title="Ver todas las fuentes"><b id="fn"></b> <span style="color:#8a8a92;font-size:11px">▾</span><br><small id="fi"></small></div>
+            <button class="arr" id="next">›</button></div>
+        </div>
+      </div>
+
+      <div class="pop" id="wheelPop" style="top:150px">
+        <div class="lbl">Elegí cualquier color</div>
+        <div class="wheel" id="wheel"><div class="knob" id="knob"></div></div>
+        <div class="prev"><span></span><em id="rgbTxt" style="font-style:normal">RGB 0, 255, 0</em><span class="grow"></span><button class="arr" style="width:auto;padding:0 10px" id="ok">Listo</button></div>
+      </div>
+      <div class="pop" id="listPop" style="bottom:72px">
+        <div class="lbl">Fuentes en el sable</div>
+        <div class="list" id="list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="subtitle" style="text-align:center;margin-top:12px">Nombres de fuentes de ejemplo: solo conocemos dos de las reales ("FallenApprentice" y "The Princess"); la lista real se lee del sable.</p>
+
+<script>
+(function () {
+  const w = document.getElementById("w"), $ = id => document.getElementById(id);
+  const comunes = ["255,0,0","0,80,255","0,255,0","160,0,255","255,230,0","255,120,0","0,220,255","255,255,255"];
+  const fuentes = ["Obi-Wan","Vader","Luke ROTJ","Kylo Ren","Ahsoka","Mace Windu","Yoda","Maul","Dooku","Grievous",
+                   "Rey","FallenApprentice","The Princess","Sidious","Starkiller","Cal Kestis"];
+  let fi = 12;
+  const setC = c => { w.style.setProperty("--c", c); $("rgbTxt").textContent = "RGB " + c.replace(/,/g, ", "); };
+  comunes.forEach(c => { const i = document.createElement("i"); i.style.background = `rgb(${c})`;
+    i.onclick = () => { setC(c); sel(i); close(); }; $("sw").appendChild(i); });
+  const rb = document.createElement("i"); rb.className = "rb"; rb.title = "Cualquier color";
+  rb.onclick = e => { e.stopPropagation(); sel(rb); toggle("wheelPop"); }; $("sw").appendChild(rb);
+  function sel(el) { document.querySelectorAll("#sw i").forEach(x => x.classList.remove("sel")); el.classList.add("sel"); }
+  sel($("sw").children[2]);
+
+  $("wheel").onclick = e => { const r = $("wheel").getBoundingClientRect(), dx = e.clientX - r.left - r.width/2, dy = e.clientY - r.top - r.height/2;
+    const d = Math.min(1, Math.hypot(dx, dy) / (r.width/2)); const ang = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+    const h = ang / 60, x = 1 - Math.abs(h % 2 - 1);
+    const base = [[1,x,0],[x,1,0],[0,1,x],[0,x,1],[x,0,1],[1,0,x]][Math.floor(h) % 6];
+    const rgb = base.map(v => Math.round(255 * (v * d + (1 - d))));
+    $("knob").style.left = (50 + dx / r.width * 100) + "%"; $("knob").style.top = (50 + dy / r.height * 100) + "%";
+    setC(rgb.join(",")); };
+  $("ok").onclick = close;
+
+  $("vol").oninput = e => $("vv").textContent = e.target.value + "%";
+  $("bri").oninput = e => $("bv").textContent = e.target.value + "%";
+  $("pwr").onclick = () => w.classList.toggle("lit");
+
+  function showFont() { $("fn").textContent = fuentes[fi]; $("fi").textContent = `Fuente ${fi + 1} de ${fuentes.length}`;
+    [...$("list").children].forEach((d, k) => d.classList.toggle("cur", k === fi)); }
+  fuentes.forEach((f, k) => { const d = document.createElement("div"); d.innerHTML = `<small>${k + 1}</small>${f}`;
+    d.onclick = () => { fi = k; showFont(); close(); }; $("list").appendChild(d); });
+  $("prev").onclick = () => { fi = (fi + fuentes.length - 1) % fuentes.length; showFont(); };
+  $("next").onclick = () => { fi = (fi + 1) % fuentes.length; showFont(); };
+  $("fname").onclick = e => { e.stopPropagation(); toggle("listPop"); };
+
+  function toggle(id) { const p = $(id), was = p.classList.contains("open"); close(); if (!was) p.classList.add("open"); }
+  function close() { document.querySelectorAll(".pop").forEach(p => p.classList.remove("open")); }
+  document.querySelectorAll(".pop").forEach(p => p.onclick = e => e.stopPropagation());
+  w.addEventListener("click", e => { if (!e.target.closest(".pop, .rb, #fname")) close(); });
+  showFont(); setTimeout(() => w.classList.add("lit"), 600);
+})();
+</script>
