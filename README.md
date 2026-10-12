@@ -1,6 +1,6 @@
-# Saber Widget
+# Desk Control
 
-Widget de escritorio para Windows que controla sables de luz con placa **Xeno3** por Bluetooth.
+Widget de escritorio para Windows que controla los dispositivos de mi escritorio: por ahora, sables de luz con placa **Xeno3** por Bluetooth; más adelante, focos Wiz.
 Es una alternativa a la app oficial Xeno Configurator.
 
 > **Proyecto no oficial.** No está afiliado a Damien Technology, a los fabricantes de sables ni a Lucasfilm/Disney.
