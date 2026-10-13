@@ -27,7 +27,8 @@
 
 .controles { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; transition: opacity .2s; }
 [data-conexion="conectando"] .controles { opacity: .55; }
-.fila-centro { display: flex; justify-content: center; padding: 4px 0; }
+.fila-estado { display: flex; justify-content: flex-end; }  /* chip con el estado de este sable */
+.fila-centro { display: flex; justify-content: center; padding: 0 0 4px; }
 .pwr { width: 58px; height: 58px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
   background: var(--superficie-2); color: var(--texto-2); transition: all .3s; }
 .icono-pwr { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }

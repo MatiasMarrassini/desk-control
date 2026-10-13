@@ -1,5 +1,5 @@
 "use strict";
-// Estado global de la ventana, pestañas, indicador y eventos que llegan desde Python.
+// Estado global de la ventana, pestañas (con su punto de estado) y eventos que llegan desde Python.
 const app = { dispositivos: [], activo: null, vistas: new Map(), modo: "dispositivo", listo: false };
 
 function crearVista(d) { return new VistaSable(d); }
@@ -11,23 +11,20 @@ async function recargarDatos() {
   if (!app.dispositivos.some((d) => d.id === app.activo)) app.activo = app.dispositivos[0]?.id ?? null;
 }
 
+// Cada pestaña lleva un punto con el estado de conexión de su dispositivo (el detalle está dentro del panel).
 function pintarPestanas() {
   const nav = document.getElementById("pestanas");
   nav.replaceChildren(...app.dispositivos.map((d) => {
     const activa = app.modo === "dispositivo" && d.id === app.activo;
-    const b = util.el("button", "pestana" + (activa ? " activa" : ""), `⚔ ${d.nombre}`);
+    const b = util.el("button", "pestana" + (activa ? " activa" : ""));
+    const vista = app.vistas.get(d.id);
+    const { texto, clase } = vista ? vista.indicador() : { texto: "", clase: "espera" };
+    const punto = util.el("span", `punto ${clase}`);
+    b.title = texto;
+    b.append(util.el("span", null, `⚔ ${d.nombre}`), punto);
     b.addEventListener("click", () => mostrarDispositivo(d.id));
     return b;
   }));
-}
-
-function pintarIndicador() {
-  const ind = document.getElementById("indicador");
-  const vista = app.modo === "dispositivo" && app.activo ? app.vistas.get(app.activo) : null;
-  if (!vista) { ind.className = "indicador"; ind.replaceChildren(); return; }
-  const { texto, clase } = vista.indicador();
-  ind.className = `indicador ${clase}`;
-  ind.replaceChildren(util.el("span", "punto"), util.el("span", null, texto));
 }
 
 function vistaVacia() {
@@ -44,7 +41,6 @@ function mostrarDispositivo(id) {
   const vista = id ? app.vistas.get(id) : null;
   document.getElementById("vista").replaceChildren(vista ? vista.raiz : vistaVacia());
   pintarPestanas();
-  pintarIndicador();
 }
 
 function mostrarBusqueda() {
@@ -57,7 +53,6 @@ function mostrarBusqueda() {
   });
   document.getElementById("vista").replaceChildren(busqueda.raiz);
   pintarPestanas();
-  pintarIndicador();
   busqueda.buscar();
 }
 
@@ -69,7 +64,7 @@ window.deskControl = {
     else if (evento.tipo === "conexion") vista.conexion(evento.datos);
     else if (evento.tipo === "error") vista.errorRecibido(evento.datos);
     else if (evento.tipo === "fuentes") vista.fuentesRecibidas(evento.datos);
-    pintarIndicador();
+    pintarPestanas();
   },
   abrirBusqueda() { if (app.listo) mostrarBusqueda(); },
 };

@@ -52,6 +52,9 @@ class VistaSable {
     sable.append(util.el("div", "hoja"), mango);
 
     const controles = util.el("div", "controles");
+    const filaEstado = util.el("div", "fila-estado");
+    this.ui.chip = util.el("div", "estado-chip");
+    filaEstado.append(this.ui.chip);
     const filaPwr = util.el("div", "fila-centro");
     this.ui.pwr = util.el("button", "pwr");
     this.ui.pwr.append(iconoEncendido());
@@ -59,7 +62,7 @@ class VistaSable {
     this.ui.pwr.addEventListener("click", () => this.enviar("PowerOn", !this.d.estado.PowerOn));
     filaPwr.append(this.ui.pwr);
     // El volumen no necesita respuesta en vivo: se envía al soltar o tras 400 ms quieto (un solo comando por gesto).
-    controles.append(filaPwr, this.tarjetaColor(), this.deslizador("Volume", "Volumen", { alQuedarseQuieto: 400 }),
+    controles.append(filaEstado, filaPwr, this.tarjetaColor(), this.deslizador("Volume", "Volumen", { alQuedarseQuieto: 400 }),
       this.deslizador("Brightness", "Brillo"), this.tarjetaFuente());
     escenario.append(sable, controles);
 
@@ -271,15 +274,24 @@ class VistaSable {
     this.pintar();
   }
 
+  // Estado de conexión de este sable: lo usan el chip del panel y el punto de su pestaña.
   indicador() {
     const estado = this.conexionActual.estado;
-    const bateria = this.d.estado.Power;
-    if (estado === "conectando") return { texto: "conectando", clase: "conectando" };
-    if (estado === "no_encontrado") return { texto: "sin señal", clase: "mal" };
-    if (estado === "sin_bluetooth") return { texto: "sin Bluetooth", clase: "mal" };
-    const texto = bateria == null ? (estado === "conectado" ? "conectado" : "en espera") : `🔋 ${bateria}%`;
-    if (estado !== "conectado") return { texto, clase: "espera" };
-    return { texto, clase: this.bateriaBaja() ? "bajo" : "bien" };
+    const texto = { conectando: "Conectando…", no_encontrado: "Sin señal", sin_bluetooth: "Sin Bluetooth",
+      conectado: "Conectado" }[estado] || "En espera";
+    let clase = "espera";
+    if (estado === "conectando") clase = "conectando";
+    else if (estado === "no_encontrado" || estado === "sin_bluetooth") clase = "mal";
+    else if (estado === "conectado") clase = this.bateriaBaja() ? "bajo" : "bien";
+    return { texto, clase };
+  }
+
+  pintarChip() {
+    const { texto, clase } = this.indicador();
+    const partes = [util.el("span", "punto"), util.el("span", null, texto)];
+    if (this.d.estado.Power != null) partes.push(util.el("span", "bateria", `🔋 ${this.d.estado.Power}%`));
+    this.ui.chip.className = `estado-chip ${clase}`;
+    this.ui.chip.replaceChildren(...partes);
   }
 
   // Con la hoja encendida el voltaje cae y la lectura baja: solo se considera fiable con la hoja apagada.
@@ -331,6 +343,7 @@ class VistaSable {
       b.classList.add("visible", "bajo");
       b.append(util.el("span", null, "🔋 Batería baja: cargá el sable pronto"));
     }
-    if (typeof pintarIndicador === "function") pintarIndicador();
+    this.pintarChip();
+    if (typeof pintarPestanas === "function") pintarPestanas();
   }
 }
