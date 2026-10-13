@@ -83,3 +83,65 @@ def test_cache_solo_guarda_claves_relevantes(tmp_path):
     assert c.buscar(d["id"])["ultimo_estado"] == {"Volume": 30}
     assert c.buscar(d["id"])["fuentes"] == ["A", "B"]
     c.actualizar_cache("no-existe", estado={"Volume": 1})  # no falla
+
+
+FOCOS = [{"mac": "444F8E000001", "ip": "192.168.1.6"}, {"mac": "444f8e000002", "ip": "192.168.1.7"}]
+
+
+def test_agregar_grupo_wiz(tmp_path):
+    c = Config.cargar(tmp_path / "c.json")
+    g = c.agregar_grupo_wiz("Cuarto", "23013550", FOCOS)
+    assert g["tipo"] == "wiz_grupo" and g["direccion"] == "WIZ:23013550"
+    assert [f["nombre"] for f in g["focos"]] == ["Foco 1", "Foco 2"]
+    assert g["focos"][0]["mac"] == "444f8e000001"  # MAC en minúsculas, como la reporta el foco
+    assert g["favoritas"] == [12, 15, 16, 14, 4, 5, 1]
+    with pytest.raises(ValueError):
+        c.agregar_grupo_wiz("Otro", "23013550", FOCOS)
+    with pytest.raises(ValueError):
+        c.agregar_grupo_wiz("Vacío", "1", [])
+
+
+def test_grupo_wiz_sobrevive_guardar_y_cargar(tmp_path):
+    ruta = tmp_path / "c.json"
+    c = Config.cargar(ruta)
+    g = c.agregar_grupo_wiz("Cuarto", "23013550", FOCOS)
+    c.guardar()
+    assert Config.cargar(ruta).buscar(g["id"])["focos"][1]["ip"] == "192.168.1.7"
+
+
+def test_config_corrupta_filtra_focos_invalidos(tmp_path):
+    ruta = tmp_path / "c.json"
+    grupo = {"id": "g1", "tipo": "wiz_grupo", "nombre": "Cuarto", "direccion": "WIZ:1",
+             "focos": [{"mac": "aa", "ip": "1.2.3.4", "nombre": "A"}, {"mac": 5}, "x"], "favoritas": [12, 999, "x"]}
+    vacio = {"id": "g2", "tipo": "wiz_grupo", "nombre": "Nada", "direccion": "WIZ:2", "focos": []}
+    ruta.write_text(json.dumps({"dispositivos": [grupo, vacio]}), encoding="utf-8")
+    c = Config.cargar(ruta)
+    assert [d["id"] for d in c.dispositivos] == ["g1"]
+    assert c.dispositivos[0]["focos"] == [{"mac": "aa", "ip": "1.2.3.4", "nombre": "A"}]
+    assert c.dispositivos[0]["favoritas"] == [12]
+
+
+def test_renombrar_foco_actualizar_ip_y_favoritas(tmp_path):
+    c = Config.cargar(tmp_path / "c.json")
+    g = c.agregar_grupo_wiz("Cuarto", "1", FOCOS)
+    c.renombrar_foco(g["id"], "444f8e000002", "  Escritorio ")
+    assert c.buscar(g["id"])["focos"][1]["nombre"] == "Escritorio"
+    with pytest.raises(ValueError):
+        c.renombrar_foco(g["id"], "444f8e000002", "   ")
+    with pytest.raises(KeyError):
+        c.renombrar_foco(g["id"], "ffffffffffff", "X")
+    c.actualizar_ip(g["id"], "444f8e000001", "192.168.1.20")
+    assert c.buscar(g["id"])["focos"][0]["ip"] == "192.168.1.20"
+    c.poner_favoritas(g["id"], [4, 5])
+    assert c.buscar(g["id"])["favoritas"] == [4, 5]
+    for malas in ([1, 2, 3, 4, 5, 6, 7, 8], [999], [4, 4]):
+        with pytest.raises(ValueError):
+            c.poner_favoritas(g["id"], malas)
+
+
+def test_cache_de_grupo_wiz_reemplaza_el_estado(tmp_path):
+    c = Config.cargar(tmp_path / "c.json")
+    g = c.agregar_grupo_wiz("Cuarto", "1", FOCOS)
+    c.actualizar_cache(g["id"], estado={"state": True, "temp": 3000, "dimming": 50, "rssi": -70})
+    c.actualizar_cache(g["id"], estado={"state": True, "sceneId": 4, "dimming": 50})
+    assert c.buscar(g["id"])["ultimo_estado"] == {"state": True, "sceneId": 4, "dimming": 50}

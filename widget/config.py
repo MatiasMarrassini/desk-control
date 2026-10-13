@@ -11,6 +11,10 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
+from widget.dispositivos.wiz_protocolo import ESCENAS, FAVORITAS_POR_DEFECTO, MAX_FAVORITAS  # noqa: E402
+
+CLAVES_CACHE_WIZ = ("state", "dimming", "temp", "r", "g", "b", "sceneId")
+
 CARPETA = Path(os.environ.get("APPDATA", str(Path.home()))) / "DeskControl"
 RUTA_POR_DEFECTO = CARPETA / "config.json"
 LARGO_MAX_NOMBRE = 40
@@ -34,8 +38,28 @@ def _limpiar_nombre(nombre) -> str:
     return limpio
 
 
+def _foco_valido(f) -> bool:
+    return isinstance(f, dict) and all(isinstance(f.get(k), str) and f.get(k) for k in ("mac", "ip"))
+
+
 def _dispositivo_valido(d) -> bool:
-    return isinstance(d, dict) and all(isinstance(d.get(k), str) and d.get(k) for k in _CAMPOS_DISPOSITIVO)
+    if not (isinstance(d, dict) and all(isinstance(d.get(k), str) and d.get(k) for k in _CAMPOS_DISPOSITIVO)):
+        return False
+    if d["tipo"] == "wiz_grupo":
+        focos = d.get("focos")
+        return isinstance(focos, list) and any(_foco_valido(f) for f in focos)
+    return True
+
+
+def _favoritas_validas(ids) -> list[int]:
+    if not isinstance(ids, list):
+        return list(FAVORITAS_POR_DEFECTO)
+    vistas, salida = set(), []
+    for i in ids:
+        if isinstance(i, int) and not isinstance(i, bool) and i in ESCENAS and i not in vistas:
+            vistas.add(i)
+            salida.append(i)
+    return salida[:MAX_FAVORITAS]
 
 
 class Config:
@@ -68,6 +92,10 @@ class Config:
                 d["ultimo_estado"] = {}
             if not isinstance(d.get("fuentes"), list):
                 d["fuentes"] = []
+            if d["tipo"] == "wiz_grupo":
+                d["focos"] = [{"mac": f["mac"], "ip": f["ip"], "nombre": str(f.get("nombre") or "Foco")}
+                              for f in d["focos"] if _foco_valido(f)]
+                d["favoritas"] = _favoritas_validas(d.get("favoritas"))
         datos["dispositivos"] = dispositivos
         return cls(ruta, datos)
 
@@ -101,6 +129,47 @@ class Config:
             self.dispositivos.append(dispositivo)
             return dispositivo
 
+    def agregar_grupo_wiz(self, nombre: str, clave: str, focos: list[dict]) -> dict:
+        with self._candado:
+            nombre = _limpiar_nombre(nombre)
+            direccion = f"WIZ:{clave}"
+            if any(d["direccion"] == direccion for d in self.dispositivos):
+                raise ValueError("Ese grupo de focos ya está guardado")
+            validos = [f for f in focos if _foco_valido(f)]
+            if not validos:
+                raise ValueError("El grupo necesita al menos un foco")
+            grupo = {"id": uuid.uuid4().hex[:8], "tipo": "wiz_grupo", "nombre": nombre, "direccion": direccion,
+                     "focos": [{"mac": f["mac"].lower(), "ip": f["ip"], "nombre": f"Foco {i}"}
+                               for i, f in enumerate(validos, start=1)],
+                     "favoritas": list(FAVORITAS_POR_DEFECTO), "ultimo_estado": {}, "fuentes": []}
+            self.dispositivos.append(grupo)
+            return grupo
+
+    def foco(self, id_: str, mac: str) -> dict:
+        grupo = self.buscar(id_)
+        foco = next((f for f in (grupo or {}).get("focos", []) if f["mac"] == mac), None)
+        if foco is None:
+            raise KeyError(mac)
+        return foco
+
+    def renombrar_foco(self, id_: str, mac: str, nombre: str) -> None:
+        with self._candado:
+            self.foco(id_, mac)["nombre"] = _limpiar_nombre(nombre)
+
+    def actualizar_ip(self, id_: str, mac: str, ip: str) -> None:
+        with self._candado:
+            with contextlib.suppress(KeyError):
+                self.foco(id_, mac)["ip"] = ip
+
+    def poner_favoritas(self, id_: str, ids: list[int]) -> None:
+        with self._candado:
+            grupo = self.buscar(id_)
+            if grupo is None:
+                raise KeyError(id_)
+            if _favoritas_validas(ids) != list(ids) or len(ids) > MAX_FAVORITAS:
+                raise ValueError(f"Favoritas inválidas (hasta {MAX_FAVORITAS} escenas distintas)")
+            grupo["favoritas"] = list(ids)
+
     def renombrar(self, id_: str, nombre: str) -> None:
         with self._candado:
             dispositivo = self.buscar(id_)
@@ -117,7 +186,9 @@ class Config:
             dispositivo = self.buscar(id_)
             if dispositivo is None:
                 return
-            if estado:
+            if estado and dispositivo["tipo"] == "wiz_grupo":
+                dispositivo["ultimo_estado"] = {k: v for k, v in estado.items() if k in CLAVES_CACHE_WIZ}
+            elif estado:
                 dispositivo["ultimo_estado"].update({k: v for k, v in estado.items() if k in CLAVES_CACHE})
             if fuentes is not None:
                 dispositivo["fuentes"] = list(fuentes)
