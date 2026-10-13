@@ -13,7 +13,7 @@ input { font: inherit; }
 .widget { display: flex; flex-direction: column; height: 100%; border: 1px solid var(--borde); }
 
 .barra { display: flex; align-items: center; gap: 6px; padding: 10px 10px 8px 12px; }
-.pestanas { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; max-width: 220px; }
+.pestanas { display: flex; gap: 4px; min-width: 0; flex: 0 1 auto; overflow: hidden; }
 .pestana { padding: 6px 12px; border-radius: 999px; font-size: 12px; color: var(--texto-2); white-space: nowrap;
   transition: background .15s, color .15s; }
 .pestana:hover { color: var(--texto); }
@@ -23,7 +23,8 @@ input { font: inherit; }
 .btn-icono:hover { background: var(--superficie-2); color: var(--texto); }
 
 /* Punto de estado: en cada pestaña (.pestana .punto.<clase>) y en el chip de cada panel (.estado-chip.<clase> .punto) */
-.pestana { display: inline-flex; align-items: center; gap: 6px; }
+.pestana { display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; }
+.pestana > span:first-child { overflow: hidden; text-overflow: ellipsis; }  /* nombres largos: se acortan con … */
 .punto { width: 7px; height: 7px; border-radius: 50%; background: #777; flex: none; }
 .punto.bien, .bien > .punto { background: var(--verde); }
 .punto.bajo, .bajo > .punto { background: var(--ambar); }

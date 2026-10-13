@@ -2,11 +2,20 @@
 // Estado global de la ventana, pestañas (con su punto de estado) y eventos que llegan desde Python.
 const app = { dispositivos: [], activo: null, vistas: new Map(), modo: "dispositivo", listo: false };
 
-function crearVista(d) { return new VistaSable(d); }
+function crearVista(d) { return d.tipo === "wiz_grupo" ? new VistaLuces(d) : new VistaSable(d); }
+function iconoDe(d) { return d.tipo === "wiz_grupo" ? "💡" : "⚔"; }
+
+// Avisa a la vista que deja o toma la pantalla (las luces consultan a los focos solo mientras se ven).
+function cambiarVistaActiva(nueva) {
+  if (app.vistaActiva && app.vistaActiva !== nueva && app.vistaActiva.alOcultar) app.vistaActiva.alOcultar();
+  if (nueva && nueva !== app.vistaActiva && nueva.alMostrar) nueva.alMostrar();
+  app.vistaActiva = nueva || null;
+}
 
 async function recargarDatos() {
   const datos = await pywebview.api.inicial();
   app.dispositivos = datos.dispositivos;
+  cambiarVistaActiva(null);  // las vistas viejas se descartan
   app.vistas = new Map(app.dispositivos.map((d) => [d.id, crearVista(d)]));
   if (!app.dispositivos.some((d) => d.id === app.activo)) app.activo = app.dispositivos[0]?.id ?? null;
 }
@@ -21,7 +30,7 @@ function pintarPestanas() {
     const { texto, clase } = vista ? vista.indicador() : { texto: "", clase: "espera" };
     const punto = util.el("span", `punto ${clase}`);
     b.title = texto;
-    b.append(util.el("span", null, `⚔ ${d.nombre}`), punto);
+    b.append(util.el("span", null, `${iconoDe(d)} ${d.nombre}`), punto);
     b.addEventListener("click", () => mostrarDispositivo(d.id));
     return b;
   }));
@@ -39,12 +48,14 @@ function mostrarDispositivo(id) {
   app.modo = "dispositivo";
   app.activo = id;
   const vista = id ? app.vistas.get(id) : null;
+  cambiarVistaActiva(vista);
   document.getElementById("vista").replaceChildren(vista ? vista.raiz : vistaVacia());
   pintarPestanas();
 }
 
 function mostrarBusqueda() {
   app.modo = "busqueda";
+  cambiarVistaActiva(null);
   const busqueda = new VistaBusqueda({
     obtenerDispositivos: () => app.dispositivos,
     alVolver: () => mostrarDispositivo(app.activo),

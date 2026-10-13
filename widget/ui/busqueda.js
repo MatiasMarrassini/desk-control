@@ -45,11 +45,13 @@ class VistaBusqueda {
       return;
     }
     const nuevos = r.encontrados.filter((s) => !s.guardado);
+    const nota = r.error_bluetooth ? " (Bluetooth apagado: solo se buscaron focos)" : "";
     if (!nuevos.length) {
-      this.mensaje(this.encontrados, "No encontré sables nuevos. ¿Está encendido, cerca y sin el teléfono conectado?");
+      this.mensaje(this.encontrados, `No encontré dispositivos nuevos${nota}. ¿Están encendidos y en la misma red?`);
       return;
     }
-    this.encontrados.replaceChildren(...nuevos.map((s) => this.filaEncontrado(s)));
+    this.encontrados.replaceChildren(...nuevos.map((s) => s.tipo === "wiz_grupo" ? this.filaGrupo(s) : this.filaEncontrado(s)));
+    if (nota) util.aviso("Bluetooth apagado: solo se buscaron focos", "info");
   }
 
   mensaje(lista, texto) { lista.replaceChildren(util.el("div", "mensaje", texto)); }
@@ -79,11 +81,26 @@ class VistaBusqueda {
     return f;
   }
 
+  filaGrupo(g) {
+    const ips = g.focos.map((f) => f.ip).join(", ");
+    const f = this.fila("💡", `${g.focos.length} ${g.focos.length === 1 ? "foco" : "focos"} WiZ`, `WiFi · ${ips}`);
+    const agregar = util.el("button", "btn primario", "＋ Agregar");
+    agregar.addEventListener("click", () => this.editar(f, g.nombre, async (nombre) => {
+      const r = await pywebview.api.guardar_grupo(g.clave, nombre, g.focos);
+      if (!r.ok) { util.aviso(r.error, "error"); return false; }
+      await this.alGuardado(r.dispositivo.id);
+      return true;
+    }));
+    f.append(agregar);
+    return f;
+  }
+
   pintarGuardados() {
     const lista = this.obtenerDispositivos();
     if (!lista.length) { this.mensaje(this.guardados, "Ninguno todavía."); return; }
     this.guardados.replaceChildren(...lista.map((d) => {
-      const f = this.fila("⚔", d.nombre, `Xeno3 · ${d.direccion}`);
+      const detalle = d.tipo === "wiz_grupo" ? `${d.focos.length} focos WiZ` : `Xeno3 · ${d.direccion}`;
+      const f = this.fila(d.tipo === "wiz_grupo" ? "💡" : "⚔", d.nombre, detalle);
       const renombrar = util.el("button", "btn-icono", "✎");
       renombrar.title = "Renombrar";
       renombrar.addEventListener("click", () => this.editar(f, d.nombre, async (nombre) => {

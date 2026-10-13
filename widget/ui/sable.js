@@ -5,20 +5,6 @@ const COLORES_COMUNES = [
   [255, 230, 0], [255, 120, 0], [0, 220, 255], [255, 255, 255],
 ];
 const INTENTOS_CONEXION = 3;
-
-// Símbolo de encendido dibujado en SVG: el carácter "⏻" queda descentrado según las métricas de la fuente.
-function iconoEncendido() {
-  const ns = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(ns, "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("class", "icono-pwr");
-  for (const d of ["M12 4v7.5", "M6.6 7a7.6 7.6 0 1 0 10.8 0"]) {  // trazo central y arco (caja de tinta centrada en 12,12)
-    const trazo = document.createElementNS(ns, "path");
-    trazo.setAttribute("d", d);
-    svg.append(trazo);
-  }
-  return svg;
-}
 const BATERIA_BAJA = 20;
 
 class VistaSable {
@@ -57,7 +43,7 @@ class VistaSable {
     filaEstado.append(this.ui.chip);
     const filaPwr = util.el("div", "fila-centro");
     this.ui.pwr = util.el("button", "pwr");
-    this.ui.pwr.append(iconoEncendido());
+    this.ui.pwr.append(util.iconoEncendido());
     this.ui.pwr.title = "Encender / apagar la hoja";
     this.ui.pwr.addEventListener("click", () => this.enviar("PowerOn", !this.d.estado.PowerOn));
     filaPwr.append(this.ui.pwr);

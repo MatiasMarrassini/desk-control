@@ -27,6 +27,19 @@ const util = {
     llamar.cancelar = () => clearTimeout(pendiente);
     return llamar;
   },
+  // Símbolo de encendido en SVG (el carácter "⏻" queda descentrado según la fuente).
+  iconoEncendido() {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("class", "icono-pwr");
+    for (const d of ["M12 4v7.5", "M6.6 7a7.6 7.6 0 1 0 10.8 0"]) {
+      const trazo = document.createElementNS(ns, "path");
+      trazo.setAttribute("d", d);
+      svg.append(trazo);
+    }
+    return svg;
+  },
   rgb(c) { return `${c[0]},${c[1]},${c[2]}`; },
   aviso(texto, tipo = "info") {
     const a = document.getElementById("aviso");

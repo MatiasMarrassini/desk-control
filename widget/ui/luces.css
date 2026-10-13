@@ -1,0 +1,64 @@
+/* Pestaña de un grupo de focos WiZ (maqueta: docs/superpowers/specs/maquetas/luces-cuarto.html).
+   --c = color actual de la luz (lo usan .pwr, los deslizadores y los resaltados); --d = brillo 0–1. */
+.panel-luces { --c: 255, 244, 229; --d: 1; display: flex; flex-direction: column; height: 100%; position: relative; }
+
+.heroe { height: 112px; flex: none; display: flex; justify-content: center; gap: 64px; align-items: flex-start; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 120%, rgba(var(--c), calc(var(--dg, 0) * .22)), transparent 70%); transition: background .4s; }
+.colgante { display: flex; flex-direction: column; align-items: center; }
+.cable { width: 2px; height: 16px; background: linear-gradient(#000, #444); }
+.bulbo { position: relative; --vidrio: rgba(70, 70, 76, .55); }
+.bulbo svg { display: block; width: 40px; height: 62px; overflow: visible; transform: rotate(180deg); }
+.bulbo .ampolla { fill: var(--vidrio); transition: fill .4s; }
+.bulbo.luce { --vidrio: rgba(var(--l), calc(.35 + var(--dl) * .65)); }
+.bulbo.luce svg { filter: drop-shadow(0 0 calc(var(--dl) * 14px) rgba(var(--l), .9)) drop-shadow(0 0 calc(var(--dl) * 38px) rgba(var(--l), .55)); }
+.bulbo .halo { position: absolute; left: 50%; top: 68%; width: 220%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--l), calc(var(--dl) * .28)), transparent 65%); opacity: 0; transition: opacity .4s; pointer-events: none; }
+.bulbo.luce .halo { opacity: 1; }
+
+.controles-luces { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 0 12px 12px; }
+.fila-luces { display: flex; align-items: center; gap: 10px; }
+.panel-luces .pwr { width: 54px; height: 54px; }
+.panel-luces.encendido .pwr { background: rgba(var(--c), .18); color: rgb(var(--c)); box-shadow: 0 0 18px rgba(var(--c), .45); }
+
+.seg { display: flex; background: rgba(0, 0, 0, .25); border-radius: 8px; padding: 2px; margin-bottom: 8px; }
+.seg button { flex: 1; color: var(--texto-2); padding: 4px; border-radius: 6px; font-size: 12px; }
+.seg button.activo { background: rgba(255, 255, 255, .1); color: #fff; }
+.temp { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 6px;
+  background: linear-gradient(90deg, rgb(255, 160, 70), rgb(255, 244, 229), rgb(190, 220, 255)); }
+.temp::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff;
+  border: 2px solid var(--fondo); box-shadow: 0 0 0 1px #888; }
+.temp-etiquetas { display: flex; justify-content: space-between; font-size: 10px; color: var(--texto-3); margin-top: 4px; }
+.temp-etiquetas b { color: var(--texto); font-size: 12px; }
+
+.escenas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.escena { border-radius: 10px; padding: 6px 2px; background: rgba(255, 255, 255, .05); color: #ccc; font-size: 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.escena span:first-child { font-size: 16px; }
+.escena span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.escena.activa { background: rgba(var(--c), .18); color: #fff; box-shadow: inset 0 0 0 1px rgba(var(--c), .6); }
+.boton-todas { font-size: 11px; color: var(--texto-2); text-transform: none; letter-spacing: 0; }
+
+.focos-titulo { display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 12px; }
+.focos-lista { display: none; margin-top: 8px; gap: 6px; flex-direction: column; }
+.focos-abiertos .focos-lista { display: flex; }
+.fila-foco { display: flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, .2); border-radius: 8px; padding: 6px 8px; font-size: 12px; }
+.fila-foco .mini { width: 14px; height: 14px; border-radius: 50%; flex: none; background: rgb(var(--l)); box-shadow: 0 0 8px rgba(var(--l), .8); }
+.fila-foco.apagado .mini { background: #444; box-shadow: none; }
+.fila-foco .nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: text; }
+.fila-foco small { color: #fca5a5; font-size: 10px; }
+.fila-foco input { flex: 1; min-width: 0; background: rgba(0, 0, 0, .3); border: 1px solid var(--borde); border-radius: 6px;
+  color: var(--texto); padding: 2px 6px; font-size: 12px; user-select: text; }
+.interruptor { width: 32px; height: 18px; border-radius: 999px; background: #444; position: relative; flex: none; }
+.interruptor::after { content: ""; position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: #ddd; transition: left .2s; }
+.interruptor.prendido { background: var(--verde); }
+.interruptor.prendido::after { left: 16px; }
+.sincronizar { border-radius: 8px; padding: 5px; font-size: 11px; background: rgba(255, 255, 255, .07); }
+.sincronizar.resaltado { background: rgba(251, 191, 36, .18); color: var(--ambar); }
+
+.lista-escenas { top: 120px; bottom: 14px; left: 14px; overflow-y: auto; }
+.lista-escenas .etiqueta { margin-top: 6px; }
+.item-escena { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border-radius: 8px; font-size: 13px; }
+.item-escena:hover { background: var(--superficie-2); }
+.item-escena .nombre { flex: 1; text-align: left; }
+.estrella { color: #666; font-size: 15px; padding: 0 4px; }
+.estrella.marcada { color: var(--ambar); }
