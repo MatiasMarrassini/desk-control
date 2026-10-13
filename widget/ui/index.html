@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' file:; style-src 'self' file:; img-src 'self' file: data:">
+<title>Desk Control</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<div class="widget">
+  <header class="barra">
+    <nav id="pestanas" class="pestanas"></nav>
+    <button id="btn-agregar" class="btn-icono" title="Agregar dispositivo">＋</button>
+    <div class="arrastre pywebview-drag-region" title="Arrastrá para mover"></div>
+    <span id="indicador" class="indicador"></span>
+    <button id="btn-ocultar" class="btn-icono" title="Ocultar (Ctrl+Shift+Espacio)">–</button>
+  </header>
+  <main id="vista" class="vista"></main>
+  <div id="aviso" class="aviso" role="status"></div>
+</div>
+<script src="util.js"></script>
+<script src="busqueda.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
