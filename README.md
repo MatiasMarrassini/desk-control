@@ -1,6 +1,6 @@
 # Desk Control
 
-Widget de escritorio para Windows que controla los dispositivos de mi escritorio: por ahora, sables de luz con placa **Xeno3** por Bluetooth; más adelante, focos Wiz.
+Widget de escritorio para Windows que controla los dispositivos de mi escritorio: sables de luz con placa **Xeno3** por Bluetooth y focos **WiZ** por wifi.
 Es una alternativa a la app oficial Xeno Configurator.
 
 > **Proyecto no oficial.** No está afiliado a Damien Technology, a los fabricantes de sables ni a Lucasfilm/Disney.
@@ -11,7 +11,7 @@ Es una alternativa a la app oficial Xeno Configurator.
 - ✅ Protocolo Bluetooth de las placas Xeno3 documentado y verificado con un sable real: [PROTOCOLO.md](PROTOCOLO.md)
 - ✅ Scripts de prueba en Python: [pruebas/](pruebas/)
 - ✅ Widget de escritorio para el sable (etapa 1). Diseño: [docs/superpowers/specs/](docs/superpowers/specs/)
-- 🔜 Control de focos Wiz
+- ✅ Pestaña "Cuarto" para focos WiZ (etapa 2): requiere la "Comunicación local" activada en la app WiZ
 
 ## Probar los scripts
 
@@ -42,5 +42,7 @@ python -m venv .venv
 - El icono de la bandeja permite agregar dispositivos, activar o desactivar el arranque con Windows y salir.
 - La primera vez, tocá **Buscar dispositivos** con el sable encendido y sin el teléfono conectado.
 - Registro de errores: `%APPDATA%\DeskControl\widget.log`.
+- Focos WiZ: tienen que estar en la misma red wifi que la PC y con "Permitir comunicación local" activado en la app
+  WiZ. La primera búsqueda puede hacer que el Firewall de Windows pida permiso: permitilo solo en redes privadas.
 
 Pruebas: `.venv/Scripts/python -m pip install -r requirements-dev.txt` y luego `.venv/Scripts/python -m pytest`.

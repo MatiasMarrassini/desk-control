@@ -43,7 +43,7 @@ Los eventos de la placa se asignan a acciones de botón y movimiento:
 - [ ] Probar Brightness y disparar efectos (Clash, Blaster…)
 - [x] Diseñar e implementar la etapa 1 del widget (sable). Consumo medido (2026-10-12): RAM 432 MB visible / 432 MB oculto (Working Set; privada ≈225 MB), CPU 0,01–0,02 %
 - [ ] Consumo: la RAM privada (≈225 MB) supera el objetivo de 200 MB; casi todo es WebView2 (6 procesos). Investigar opciones de WebView2 para reducirlo sin perder las animaciones
-- [ ] Etapa 2: focos Wiz (controles básicos, escenas, grupo "Cuarto")
+- [x] Etapa 2: focos WiZ (pestaña "Cuarto", escenas verificadas con pruebas/wiz_escenas.py)
 - [x] Mango de Obi-Wan detallado (widget/ui/mango-obi-wan.svg, estilo metálico, a partir de la foto del sable real)
 - [ ] Ver el sentido real de FileTransfer download/upload
 
