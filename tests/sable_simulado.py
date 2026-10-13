@@ -21,8 +21,10 @@ def estado_inicial() -> dict:
 
 class SableSimulado:
     def __init__(self, *, fallos_conexion=0, sin_bluetooth=False, responde_saludo=True, autoriza=True,
-                 autoriza_por_notificacion=True, errores=None, corta_en=None):
+                 autoriza_por_notificacion=True, errores=None, corta_en=None, retardo=0.0):
         self.al_desconectar = None
+        self.retardo = retardo  # > 0: responde en serie, una notificación cada `retardo` s (como el sable real)
+        self._proxima = 0.0
         self.estado = estado_inicial()
         self.fuentes = list(FUENTES)
         self.escrituras: list[tuple[str, bytes]] = []
@@ -104,8 +106,14 @@ class SableSimulado:
     def _notificar(self, uuid, cuerpo, tipo=p.TIPO_RESPUESTA):
         datos = json.dumps([tipo, cuerpo], separators=(",", ":")).encode()
         callback = self._callbacks.get(uuid)
-        if callback:
-            asyncio.get_running_loop().call_soon(callback, datos)
+        if not callback:
+            return
+        loop = asyncio.get_running_loop()
+        if self.retardo:
+            self._proxima = max(loop.time(), self._proxima) + self.retardo
+            loop.call_at(self._proxima, callback, datos)
+        else:
+            loop.call_soon(callback, datos)
 
     def comandos(self) -> list[dict]:
         """Comandos enviados por el canal de datos, sin contar la autorización."""

@@ -121,6 +121,32 @@ def test_quitar_cierra_la_sesion(entorno):
     assert entorno.config.dispositivos == []
 
 
+def test_llamadas_simultaneas_crean_una_sola_sesion(tmp_path):
+    # pywebview atiende cada llamada de JS en un hilo nuevo: dos primeras órdenes casi juntas no deben abrir 2 conexiones.
+    import threading
+    import time
+    config = Config.cargar(tmp_path / "config.json")
+    d = config.agregar_dispositivo("xeno", "Mi sable", "AA:BB:CC:DD:EE:FF")
+    bucle = BucleAsync()
+    bucle.iniciar()
+    creadas = []
+
+    def crear_sesion(_d):
+        time.sleep(0.05)  # agranda la ventana de la carrera
+        creadas.append(1)
+        return SesionSable(lambda: SableSimulado(), pausa_reintento=0.01, inactividad=5, timeout_respuesta=0.5)
+
+    puente = Puente(config, bucle, crear_sesion)
+    hilos = [threading.Thread(target=puente.sable_enviar, args=(d["id"], "Volume", 10 + i)) for i in range(5)]
+    for h in hilos:
+        h.start()
+    for h in hilos:
+        h.join()
+    assert len(creadas) == 1
+    bucle.ejecutar(puente._cerrar()).result(5)
+    bucle.detener()
+
+
 def test_emitir_codifica_texto_raro(entorno):
     raro = '<b>"x"</b> \'; alert(1)//'
     entorno.puente._emitir({"id": "x", "tipo": "fuentes", "datos": [raro]})

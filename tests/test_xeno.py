@@ -63,6 +63,16 @@ async def test_error_tipo_4_avisa_y_no_cambia_estado():
     assert sable.estado["Volume"] == 20
 
 
+async def test_cambiar_de_fuente_durante_el_listado_no_corre_los_nombres():
+    # Al cambiar de fuente el sable responde con "fontname" como texto (estado), no como respuesta al listado.
+    sable = SableXeno(SableSimulado(retardo=0.03), timeout_respuesta=1.0)
+    await sable.conectar()
+    listado = asyncio.create_task(sable.listar_fuentes())
+    await asyncio.sleep(0.05)
+    await sable.enviar("CurrentSoundPackageNo", 1)
+    assert await listado == FUENTES
+
+
 async def test_listar_fuentes_no_ensucia_el_estado():
     sable = SableXeno(SableSimulado(), timeout_respuesta=0.5)
     await sable.conectar()

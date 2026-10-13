@@ -79,6 +79,11 @@ class Config:
             os.replace(temporal, self.ruta)
 
     @property
+    def candado(self) -> threading.RLock:
+        """Para leer varios datos de forma consistente mientras otro hilo los actualiza."""
+        return self._candado
+
+    @property
     def dispositivos(self) -> list[dict]:
         return self.datos["dispositivos"]
 

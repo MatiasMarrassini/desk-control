@@ -76,6 +76,18 @@ def test_elegir_posicion_prefiere_monitor_vertical():
     assert ventana.elegir_posicion([]) == (12, 12)
 
 
+def test_posicion_guardada_se_usa_si_esta_en_pantalla():
+    areas = [(0, 0, 1920, 1040), (-1080, -400, 0, 1480)]
+    assert ventana.posicion_inicial(-900, 100, areas) == (-900, 100)
+
+
+def test_posicion_guardada_fuera_de_pantalla_vuelve_a_la_de_defecto():
+    # Se desconectó el monitor vertical: la posición guardada quedó fuera de toda pantalla.
+    areas = [(0, 0, 1920, 1040)]
+    assert ventana.posicion_inicial(-900, 100, areas) == (12, 12)
+    assert ventana.posicion_inicial(None, None, areas) == (12, 12)
+
+
 def test_listar_areas_de_trabajo_real():
     areas = ventana.listar_areas_de_trabajo()
     assert areas and all(len(a) == 4 for a in areas)

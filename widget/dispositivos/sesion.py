@@ -39,6 +39,7 @@ class SesionSable:
         self._pendientes: dict = {}
         self._trabajo: asyncio.Task | None = None
         self._tarea_inactividad: asyncio.Task | None = None
+        self._listado: asyncio.Task | None = None
         self._candado = asyncio.Lock()
 
     # ---- API ----
@@ -52,10 +53,19 @@ class SesionSable:
 
     async def reintentar(self) -> None:
         if self._trabajo is None or self._trabajo.done():
-            self._trabajo = asyncio.create_task(self._asegurar_conexion())
+            # Conecta y después envía lo que se haya pedido mientras tanto.
+            self._trabajo = asyncio.create_task(self._procesar(conectar_siempre=True))
 
     async def fuentes(self) -> list[str] | None:
-        """Lista de fuentes del sable, o None si no se pudo conectar o leer."""
+        """Lista de fuentes del sable, o None si no se pudo conectar o leer.
+
+        Un solo listado a la vez: si ya hay uno en curso, se espera ese mismo resultado.
+        """
+        if self._listado is None or self._listado.done():
+            self._listado = asyncio.create_task(self._listar_fuentes())
+        return await asyncio.shield(self._listado)
+
+    async def _listar_fuentes(self) -> list[str] | None:
         if not await self._asegurar_conexion():
             return None
         try:
@@ -67,14 +77,17 @@ class SesionSable:
         return nombres
 
     async def cerrar(self) -> None:
-        for tarea in (self._trabajo, self._tarea_inactividad):
+        for tarea in (self._trabajo, self._tarea_inactividad, self._listado):
             if tarea is not None and not tarea.done():
                 tarea.cancel()
         self._pendientes.clear()
         await self._desconectar()
 
     # ---- interno ----
-    async def _procesar(self) -> None:
+    async def _procesar(self, conectar_siempre: bool = False) -> None:
+        if conectar_siempre and not await self._asegurar_conexion():
+            self._pendientes.clear()
+            return
         while self._pendientes:
             if not await self._asegurar_conexion():
                 self._pendientes.clear()

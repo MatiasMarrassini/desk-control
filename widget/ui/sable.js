@@ -219,7 +219,16 @@ class VistaSable {
   conexion(info) {
     this.conexionActual = info;
     this.d.conexion = info.estado;
+    // Si la conexión falló o se cortó, las órdenes pendientes se descartaron: mostrar lo que el sable confirmó.
+    if (["espera", "no_encontrado", "sin_bluetooth"].includes(info.estado)) this.volverAConfirmado();
     this.pintarConexion();
+  }
+
+  volverAConfirmado() {
+    for (const [clave, valor] of Object.entries(this.confirmado)) {
+      if (clave !== this.arrastrando) this.d.estado[clave] = valor;
+    }
+    this.pintar();
   }
 
   fuentesRecibidas(lista) {

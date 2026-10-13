@@ -5,6 +5,7 @@ pywebview expone a JS todos los métodos y atributos públicos de este objeto: l
 import asyncio
 import json
 import logging
+import threading
 from typing import Callable
 
 from widget.bucle import BucleAsync
@@ -29,6 +30,7 @@ class Puente:
         self._crear_sesion = crear_sesion
         self._buscar = buscar
         self._sesiones: dict[str, SesionSable] = {}
+        self._candado_sesiones = threading.Lock()  # pywebview atiende cada llamada de JS en un hilo distinto
         self._ventana = None
         self._al_ocultar: Callable[[], None] | None = None
 
@@ -97,7 +99,8 @@ class Puente:
         return {"ok": True}
 
     def quitar_dispositivo(self, id_) -> dict:
-        sesion = self._sesiones.pop(id_, None)
+        with self._candado_sesiones:
+            sesion = self._sesiones.pop(id_, None)
         if sesion is not None:
             self._bucle.ejecutar(sesion.cerrar()).result(TIMEOUT_CIERRE)
         self._config.quitar(id_)
@@ -111,27 +114,31 @@ class Puente:
 
     # ---- interno ----
     async def _cerrar(self) -> None:
-        for sesion in list(self._sesiones.values()):
+        with self._candado_sesiones:
+            sesiones = list(self._sesiones.values())
+        for sesion in sesiones:
             await sesion.cerrar()
 
     def _vista_dispositivo(self, d: dict) -> dict:
         sesion = self._sesiones.get(d["id"])
+        with self._config.candado:  # el hilo del Bluetooth actualiza la caché mientras tanto
+            estado = dict(sesion.estado) if sesion else dict(d["ultimo_estado"])
+            fuentes = list(d["fuentes"])
         return {
             "id": d["id"], "tipo": d["tipo"], "nombre": d["nombre"], "direccion": d["direccion"],
-            "conexion": sesion.conexion if sesion else ESPERA,
-            "estado": dict(sesion.estado) if sesion else dict(d["ultimo_estado"]),
-            "fuentes": list(d["fuentes"]),
+            "conexion": sesion.conexion if sesion else ESPERA, "estado": estado, "fuentes": fuentes,
         }
 
     def _sesion(self, id_: str) -> SesionSable:
-        if id_ not in self._sesiones:
-            dispositivo = self._config.buscar(id_)
-            if dispositivo is None:
-                raise KeyError("Dispositivo desconocido")
-            sesion = self._crear_sesion(dispositivo)
-            sesion.al_evento = lambda tipo, datos, i=id_: self._al_evento(i, tipo, datos)
-            self._sesiones[id_] = sesion
-        return self._sesiones[id_]
+        with self._candado_sesiones:
+            if id_ not in self._sesiones:
+                dispositivo = self._config.buscar(id_)
+                if dispositivo is None:
+                    raise KeyError("Dispositivo desconocido")
+                sesion = self._crear_sesion(dispositivo)
+                sesion.al_evento = lambda tipo, datos, i=id_: self._al_evento(i, tipo, datos)
+                self._sesiones[id_] = sesion
+            return self._sesiones[id_]
 
     def _al_evento(self, id_: str, tipo: str, datos: dict) -> None:
         """Corre en el hilo del Bluetooth."""

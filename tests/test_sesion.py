@@ -133,6 +133,22 @@ async def test_fuentes_conecta_y_lista():
     await s.cerrar()
 
 
+async def test_dos_listados_a_la_vez_dan_la_lista_correcta_y_se_leen_una_vez():
+    s, creados, _ = sesion_con(SableSimulado(retardo=0.02))
+    uno, dos = await asyncio.gather(s.fuentes(), s.fuentes())
+    assert uno == FUENTES and dos == FUENTES
+    assert creados[0].comandos().count({"ls": "/"}) == 1
+    await s.cerrar()
+
+
+async def test_orden_durante_reintentar_se_envia_al_conectar():
+    s, creados, _ = sesion_con()
+    await s.reintentar()
+    await s.pedir("PowerOn", True)
+    await esperar_hasta(lambda: creados and creados[0].comandos() == [{"PowerOn": True}])
+    await s.cerrar()
+
+
 async def test_fuentes_devuelve_none_si_no_conecta():
     s, _, _ = sesion_con(*[SableSimulado(fallos_conexion=1) for _ in range(3)])
     assert await s.fuentes() is None

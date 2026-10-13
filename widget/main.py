@@ -15,7 +15,7 @@ from widget.escritorio import autoarranque
 from widget.escritorio.atajo import AtajoGlobal, AtajoInvalido
 from widget.escritorio.bandeja import crear_bandeja
 from widget.escritorio.instancia import adquirir_instancia_unica
-from widget.escritorio.ventana import (buscar_ventana, es_primer_plano, posicion_por_defecto,
+from widget.escritorio.ventana import (buscar_ventana, es_primer_plano, listar_areas_de_trabajo, posicion_inicial,
                                        redondear_esquinas, traer_al_frente)
 from widget.puente import Puente
 
@@ -41,9 +41,18 @@ def configurar_registro(debug: bool) -> None:
 class ControlVentana:
     """Mostrar/ocultar. El atajo oculta solo si el widget ya está al frente; si está tapado, lo trae."""
 
-    def __init__(self, ventana, visible: bool):
+    def __init__(self, ventana, visible: bool, al_ocultar=None):
         self.ventana = ventana
         self.visible = visible
+        self.al_ocultar = al_ocultar or self.ocultar  # ocultar "completo" (p. ej. guardando la posición)
+        self.saliendo = False  # lo activa "Salir" de la bandeja: solo entonces cerrar la ventana cierra el programa
+
+    def al_cerrar(self, *_args) -> bool:
+        """Manejador de `closing` de pywebview: devolver False cancela el cierre (Alt+F4 solo oculta)."""
+        if self.saliendo:
+            return True
+        self.al_ocultar()
+        return False
 
     def ajustar_estilo(self) -> None:
         # Al quitar los bordes, WinForms achica la ventana (380×600 → 364×561): se restaura el tamaño pedido.
@@ -67,7 +76,7 @@ class ControlVentana:
     def alternar(self) -> None:
         hwnd = buscar_ventana(TITULO)
         if self.visible and hwnd and es_primer_plano(hwnd):
-            self.ocultar()
+            self.al_ocultar()
         else:
             self.mostrar()
 
@@ -98,9 +107,7 @@ def main(argv=None) -> int:
     puente = Puente(config, bucle, crear_sesion)
 
     posicion = config.datos["ventana"]
-    x, y = posicion.get("x"), posicion.get("y")
-    if not isinstance(x, int) or not isinstance(y, int):
-        x, y = posicion_por_defecto()
+    x, y = posicion_inicial(posicion.get("x"), posicion.get("y"), listar_areas_de_trabajo())
     ventana = webview.create_window(TITULO, url_interfaz(), js_api=puente, width=ANCHO, height=ALTO, x=x, y=y,
                                     resizable=False, frameless=True, easy_drag=False, hidden=args.oculto,
                                     background_color="#1C1C20")
@@ -115,8 +122,10 @@ def main(argv=None) -> int:
         control.ocultar()
         puente._guardar()
 
+    control.al_ocultar = ocultar
     ventana.events.moved += guardar_posicion
     ventana.events.shown += lambda *_args: control.ajustar_estilo()
+    ventana.events.closing += control.al_cerrar
     puente._conectar_ventana(ventana, al_ocultar=ocultar)
 
     atajo = None
@@ -135,13 +144,17 @@ def main(argv=None) -> int:
         config.datos["autoarranque"] = activo
         puente._guardar()
 
+    def salir() -> None:
+        control.saliendo = True
+        ventana.destroy()
+
     def agregar() -> None:
         control.mostrar()
         ventana.run_js("window.deskControl && window.deskControl.abrirBusqueda()")
 
     bandeja = crear_bandeja(al_alternar=control.alternar, al_agregar=agregar,
                             autoarranque_activo=autoarranque.esta_activo,
-                            al_cambiar_autoarranque=cambiar_autoarranque, al_salir=ventana.destroy)
+                            al_cambiar_autoarranque=cambiar_autoarranque, al_salir=salir)
     bandeja.run_detached()
     if not atajo_ok:
         aviso = f"El atajo «{config.datos.get('atajo')}» no está disponible. Cambialo en config.json."

@@ -3,6 +3,28 @@ from webview.util import is_local_url
 from widget import main
 
 
+class VentanaFalsa:
+    def __init__(self):
+        self.ocultada = False
+
+    def hide(self):
+        self.ocultada = True
+
+
+def test_cerrar_la_ventana_la_oculta_en_vez_de_salir():
+    # Alt+F4 (o cualquier cierre que no venga de "Salir") solo oculta el widget.
+    ocultas = []
+    control = main.ControlVentana(VentanaFalsa(), visible=True, al_ocultar=lambda: ocultas.append(True))
+    assert control.al_cerrar() is False  # False cancela el cierre en pywebview
+    assert ocultas == [True]
+
+
+def test_salir_desde_la_bandeja_si_cierra():
+    control = main.ControlVentana(VentanaFalsa(), visible=True, al_ocultar=lambda: None)
+    control.saliendo = True
+    assert control.al_cerrar() is True
+
+
 def test_la_interfaz_se_carga_sin_servidor_http():
     # pywebview levanta un servidor HTTP local para rutas "locales"; con file:// no abre ningún puerto.
     url = main.url_interfaz()

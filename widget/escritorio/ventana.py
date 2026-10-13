@@ -32,6 +32,18 @@ def elegir_posicion(areas: list[tuple[int, int, int, int]], margen: int = 12) ->
     return izquierda + margen, arriba + margen
 
 
+def posicion_inicial(x, y, areas: list[tuple[int, int, int, int]], margen: int = 12) -> tuple[int, int]:
+    """La posición guardada si la barra superior del widget cae en alguna pantalla; si no, la de por defecto.
+
+    Así, si se desconecta o reacomoda el monitor vertical, el widget no queda abierto fuera de la vista.
+    """
+    if isinstance(x, int) and isinstance(y, int):
+        px, py = x + 40, y + 20  # un punto de la barra superior, desde donde se lo puede arrastrar
+        if any(a[0] <= px < a[2] and a[1] <= py < a[3] for a in areas):
+            return x, y
+    return elegir_posicion(areas, margen)
+
+
 def listar_areas_de_trabajo() -> list[tuple[int, int, int, int]]:
     areas = []
 

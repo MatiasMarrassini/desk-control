@@ -23,7 +23,8 @@ class SableXeno:
         self.al_cambiar: Callable[[dict], None] | None = None
         self.al_error: Callable[[str, str], None] | None = None
         self._timeout = timeout_respuesta
-        self._esperas: dict[str, list[asyncio.Future]] = {}
+        # Por clave: (futuro, acepta). `acepta` decide si un valor es la respuesta a esa consulta en particular.
+        self._esperas: dict[str, list[tuple[asyncio.Future, Callable]]] = {}
         self._ensambladores = {p.CAR_HANDSHAKE: p.Ensamblador(), p.CAR_DATOS: p.Ensamblador()}
 
     async def conectar(self) -> None:
@@ -62,41 +63,52 @@ class SableXeno:
 
     async def listar_fuentes(self) -> list[str]:
         """Nombres de las fuentes en orden de carpeta (índice 0 = carpeta 1). Solo lectura."""
-        rango = await self._consultar("ls", "/")
+        rango = await self._consultar("ls", "/", acepta=lambda v: v is None or isinstance(v, list))
         if not (isinstance(rango, list) and len(rango) >= 2 and all(isinstance(n, int) for n in rango)):
             return []
         nombres = []
         for n in range(rango[0], rango[-1] + 1):
-            valor = await self._consultar("fontname", f"/{n}")
+            ruta = f"/{n}"
+            # Solo vale ["/n", "Nombre"]: un "fontname" de texto es estado (cambio de fuente), no esta respuesta.
+            valor = await self._consultar("fontname", ruta,
+                                          acepta=lambda v, r=ruta: isinstance(v, list) and len(v) > 1 and v[0] == r)
             valido = isinstance(valor, list) and len(valor) > 1 and isinstance(valor[1], str)
             nombres.append(valor[1] if valido else f"Fuente {n}")
         return nombres
 
     async def desconectar(self) -> None:
         for esperas in self._esperas.values():
-            for futuro in esperas:
+            for futuro, _ in esperas:
                 if not futuro.done():
                     futuro.cancel()
         self._esperas.clear()
         await self.transporte.desconectar()
 
-    async def _consultar(self, clave: str, valor):
-        espera = self._esperar(clave)
+    async def _consultar(self, clave: str, valor, acepta: Callable = lambda _v: True):
+        espera = self._esperar(clave, acepta)
         await self.enviar(clave, valor)
         try:
             return await asyncio.wait_for(espera, self._timeout)
         except asyncio.TimeoutError:
             raise ErrorProtocolo(f"Sin respuesta a {clave}") from None
 
-    def _esperar(self, clave: str) -> asyncio.Future:
+    def _esperar(self, clave: str, acepta: Callable = lambda _v: True) -> asyncio.Future:
         futuro = asyncio.get_running_loop().create_future()
-        self._esperas.setdefault(clave, []).append(futuro)
+        self._esperas.setdefault(clave, []).append((futuro, acepta))
         return futuro
 
-    def _resolver(self, clave: str, valor) -> None:
-        for futuro in self._esperas.pop(clave, []):
-            if not futuro.done():
+    def _resolver(self, clave: str, valor, forzar: bool = False) -> None:
+        """Resuelve las esperas de `clave` que aceptan `valor` (o todas, si `forzar`: respuestas de error)."""
+        pendientes = []
+        for futuro, acepta in self._esperas.pop(clave, []):
+            if futuro.done():
+                continue
+            if forzar or acepta(valor):
                 futuro.set_result(valor)
+            else:
+                pendientes.append((futuro, acepta))
+        if pendientes:
+            self._esperas[clave] = pendientes
 
     def _receptor(self, uuid: str) -> Callable[[bytes], None]:
         def recibir(datos: bytes) -> None:
@@ -107,7 +119,7 @@ class SableXeno:
     def _procesar(self, tipo: int, cuerpo: dict) -> None:
         if tipo == p.TIPO_ERROR:
             for clave, mensaje in cuerpo.items():
-                self._resolver(clave, None)
+                self._resolver(clave, None, forzar=True)
                 if self.al_error:
                     self.al_error(clave, str(mensaje))
             return
