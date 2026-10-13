@@ -223,14 +223,21 @@ class Puente:
 
     def _ventana_visible(self, visible: bool) -> None:
         """Lo llama main al mostrar/ocultar la ventana: sin ventana visible no se consulta a los focos."""
+        # Se llama desde el hilo de la interfaz (incluso al cerrar la ventana): no espera al bucle.
         self._ventana_esta_visible = visible
         for id_ in list(self._pestanas_visibles):
             with contextlib.suppress(KeyError):
-                self._aplicar_visibilidad(id_)
+                self._aplicar_visibilidad(id_, esperar=False)
 
-    def _aplicar_visibilidad(self, id_: str) -> None:
+    def _aplicar_visibilidad(self, id_: str, esperar: bool = True) -> None:
         efectivo = self._ventana_esta_visible and id_ in self._pestanas_visibles
-        self._bucle.ejecutar(self._grupo(id_).visible(efectivo)).result(TIMEOUT_CORTO)
+        futuro = self._bucle.ejecutar(self._grupo(id_).visible(efectivo))
+        if esperar:
+            futuro.result(TIMEOUT_CORTO)
+        else:
+            futuro.add_done_callback(
+                lambda f: f.cancelled() or f.exception() is None
+                or log.error("Error al pausar o reanudar la consulta", exc_info=f.exception()))
 
     def _sesion(self, id_: str) -> SesionSable:
         with self._candado_sesiones:

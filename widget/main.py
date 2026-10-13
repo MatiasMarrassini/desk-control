@@ -53,7 +53,10 @@ class ControlVentana:
         """Manejador de `closing` de pywebview: devolver False cancela el cierre (Alt+F4 solo oculta)."""
         if self.saliendo:
             return True
-        self.al_ocultar()
+        try:
+            self.al_ocultar()
+        except Exception:
+            log.exception("Error al ocultar la ventana")  # igual se cancela el cierre: Alt+F4 nunca sale
         return False
 
     def ajustar_estilo(self) -> None:

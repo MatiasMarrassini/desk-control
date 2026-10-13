@@ -178,6 +178,14 @@ def test_ocultar_llama_al_callback(entorno):
     assert entorno.ocultadas == [True]
 
 
+def cerrar_focos(entorno, *focos):
+    """Los focos simulados viven en el bucle: se cierran ahí (cerrarlos desde este hilo no es seguro)."""
+    async def cerrar():
+        for f in focos:
+            f.cerrar()
+    entorno.bucle.ejecutar(cerrar()).result(2)
+
+
 def grupo_con_focos(entorno):
     uno = entorno.bucle.ejecutar(iniciar_foco(mac="aa0000000001")).result(2)
     dos = entorno.bucle.ejecutar(iniciar_foco(mac="aa0000000002")).result(2)
@@ -193,7 +201,7 @@ def test_inicial_muestra_el_grupo_de_focos(entorno):
     assert vista["tipo"] == "wiz_grupo" and [f["nombre"] for f in vista["focos"]] == ["Foco 1", "Foco 2"]
     assert vista["favoritas"] == [12, 15, 16, 14, 4, 5, 1] and len(vista["escenas"]) == 33
     assert vista["sincronizados"] is True
-    uno.cerrar(); dos.cerrar()
+    cerrar_focos(entorno, uno, dos)
 
 
 def test_luces_enviar_llega_a_los_focos_y_emite_estado(entorno):
@@ -203,7 +211,7 @@ def test_luces_enviar_llega_a_los_focos_y_emite_estado(entorno):
     esperar_sync(lambda: any(e["id"] == g["id"] and e["tipo"] == "estado" and e["datos"]["grupo"].get("dimming") == 40
                              for e in entorno.ventana.eventos()))
     assert entorno.config.buscar(g["id"])["ultimo_estado"]["dimming"] == 40
-    uno.cerrar(); dos.cerrar()
+    cerrar_focos(entorno, uno, dos)
 
 
 def test_luces_enviar_invalido_o_sin_respuesta(entorno):
@@ -213,7 +221,7 @@ def test_luces_enviar_invalido_o_sin_respuesta(entorno):
     uno.activo = dos.activo = False
     r = entorno.puente.luces_enviar(g["id"], {"dimming": 40})
     assert r == {"ok": False, "error": "Ningún foco respondió"}
-    uno.cerrar(); dos.cerrar()
+    cerrar_focos(entorno, uno, dos)
 
 
 def test_luces_un_foco_y_sincronizar(entorno):
@@ -223,7 +231,7 @@ def test_luces_un_foco_y_sincronizar(entorno):
     assert dos.estado["state"] is False and uno.estado["state"] is True
     assert entorno.puente.luces_sincronizar(g["id"]) == {"ok": True}
     assert dos.estado["state"] is True
-    uno.cerrar(); dos.cerrar()
+    cerrar_focos(entorno, uno, dos)
 
 
 def test_visibilidad_combina_ventana_y_pestana(entorno):
@@ -239,7 +247,7 @@ def test_visibilidad_combina_ventana_y_pestana(entorno):
     entorno.puente._ventana_visible(True)  # al volver a mostrarlo, la pestaña sigue activa: retoma
     esperar_sync(lambda: len(uno.recibidos) > cantidad)
     entorno.puente.luces_visible(g["id"], False)
-    uno.cerrar(); dos.cerrar()
+    cerrar_focos(entorno, uno, dos)
 
 
 def test_cambio_de_ip_se_guarda(entorno):
@@ -247,7 +255,7 @@ def test_cambio_de_ip_se_guarda(entorno):
     controlador = entorno.puente._sesion(g["id"])
     controlador.al_evento("ip", {"mac": "aa0000000001", "ip": "192.168.1.30"})
     assert entorno.config.buscar(g["id"])["focos"][0]["ip"] == "192.168.1.30"
-    uno.cerrar(); dos.cerrar()
+    cerrar_focos(entorno, uno, dos)
 
 
 def test_favoritas_y_nombres_de_focos(entorno):
@@ -257,10 +265,22 @@ def test_favoritas_y_nombres_de_focos(entorno):
     assert entorno.puente.renombrar_foco(g["id"], "aa0000000001", "Mesa de luz") == {"ok": True}
     vista = next(d for d in entorno.puente.inicial()["dispositivos"] if d["id"] == g["id"])
     assert vista["focos"][0]["nombre"] == "Mesa de luz" and vista["favoritas"] == [4, 5]
-    uno.cerrar(); dos.cerrar()
+    cerrar_focos(entorno, uno, dos)
 
 
 def test_guardar_grupo(entorno):
     r = entorno.puente.guardar_grupo("9", "Living", [{"mac": "cc01", "ip": "192.168.1.9"}])
     assert r["ok"] and r["dispositivo"]["tipo"] == "wiz_grupo" and r["dispositivo"]["nombre"] == "Living"
     assert entorno.puente.guardar_grupo("9", "Otra vez", [{"mac": "cc01", "ip": "192.168.1.9"}])["ok"] is False
+
+
+def test_ventana_visible_no_bloquea_si_el_bucle_esta_ocupado(entorno):
+    # Lo llama el cierre de la ventana (hilo de la interfaz): no puede quedarse esperando al bucle.
+    g, uno, dos = grupo_con_focos(entorno)
+    entorno.puente.luces_visible(g["id"], True)
+    entorno.bucle.loop.call_soon_threadsafe(time.sleep, 1.0)  # el bucle queda ocupado 1 s
+    inicio = time.monotonic()
+    entorno.puente._ventana_visible(False)
+    assert time.monotonic() - inicio < 0.3
+    entorno.puente.luces_visible(g["id"], False)
+    cerrar_focos(entorno, uno, dos)

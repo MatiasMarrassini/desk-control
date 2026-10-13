@@ -138,3 +138,53 @@ async def test_cerrar_detiene_la_consulta():
     await asyncio.sleep(0.4)
     assert len(uno.recibidos) == cantidad
     uno.cerrar(); dos.cerrar()
+
+
+async def test_consulta_lenta_no_pisa_una_orden_posterior():
+    grupo, uno, dos, eventos = await grupo_de_dos()
+    dos.perder = 1  # el getPilot al foco 2 se pierde: la consulta queda abierta un rato
+    consulta = asyncio.create_task(grupo.consultar())
+    await asyncio.sleep(0.03)  # el foco 1 ya respondió dimming 100
+    assert await grupo.enviar({"dimming": 20}) is True
+    await consulta
+    assert grupo.estado["dimming"] == 20
+    assert [f["estado"]["dimming"] for f in grupo.focos] == [20, 20]
+    assert grupo.sincronizados is True
+    assert eventos[-1][0] == "estado" and eventos[-1][1]["grupo"]["dimming"] == 20
+    uno.cerrar(); dos.cerrar()
+
+
+async def test_otro_foco_en_la_ip_guardada_no_se_toma_como_propio():
+    nuestro = await iniciar_foco(mac="bb0000000001")
+    ajeno = await iniciar_foco(mac="ff0000000009")  # otro foco WiZ recibió la IP vieja
+
+    async def buscar():
+        return [(("127.0.0.1", nuestro.puerto), {"method": "getSystemConfig", "result": {"mac": "bb0000000001"}}),
+                (("127.0.0.1", ajeno.puerto), {"method": "getSystemConfig", "result": {"mac": "ff0000000009"}})]
+
+    grupo = GrupoWiz([{"mac": "bb0000000001", "ip": "127.0.0.1", "puerto": ajeno.puerto}], buscar=buscar,
+                     timeout=0.1, intentos=1, espera_rebusqueda=0)
+    await grupo.consultar()
+    assert grupo.focos[0]["puerto"] == nuestro.puerto
+    assert await grupo.enviar({"dimming": 33}) is True
+    assert nuestro.estado["dimming"] == 33 and ajeno.estado["dimming"] == 100
+    nuestro.cerrar(); ajeno.cerrar()
+
+
+async def test_otro_foco_en_la_ip_y_el_nuestro_no_aparece():
+    ajeno = await iniciar_foco(mac="ff0000000009")
+    grupo = GrupoWiz([{"mac": "bb0000000001", "ip": "127.0.0.1", "puerto": ajeno.puerto}],
+                     buscar=lambda: asyncio.sleep(0, result=[]), timeout=0.1, intentos=1, espera_rebusqueda=0)
+    await grupo.consultar()
+    assert grupo.focos[0]["responde"] is False and grupo.conexion == "sin_respuesta"
+    ajeno.cerrar()
+
+
+async def test_ocultar_y_mostrar_a_la_vez_deja_la_consulta_andando():
+    grupo, uno, dos, _ = await grupo_de_dos()
+    await grupo.visible(True)
+    await asyncio.gather(grupo.visible(False), grupo.visible(True))  # llegan cruzados desde otros hilos
+    cantidad = len(uno.recibidos)
+    await esperar_hasta(lambda: len(uno.recibidos) > cantidad)
+    await grupo.cerrar()
+    uno.cerrar(); dos.cerrar()

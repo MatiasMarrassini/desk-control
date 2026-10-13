@@ -310,25 +310,30 @@ class VistaLuces {
   // ---- pintado ----
   detenerAnimacion() { if (this.animacion) { clearInterval(this.animacion); this.animacion = null; } }
 
+  // Solo colores y brillo (variables CSS y clases): es lo único que cambia en cada paso de la animación,
+  // así los botones no se rehacen debajo del mouse y ningún clic se pierde.
+  pintarLuz() {
+    const e = this.estado;
+    const prendido = e.state !== false;
+    this.raiz.style.setProperty("--c", util.rgb(colorDeLuz(e, this.fase)));
+    this.raiz.style.setProperty("--dg", prendido ? (e.dimming || 100) / 100 : 0);
+    this.raiz.classList.toggle("encendido", prendido);
+    const filas = this.ui.listaFocos.querySelectorAll(".fila-foco");
+    this.focos.forEach((foco, i) => {
+      const propio = this.sincronizados ? e : { ...e, ...(foco.estado || {}) };
+      const luz = util.rgb(colorDeLuz(propio, this.fase));
+      if (filas[i]) filas[i].style.setProperty("--l", luz);
+      const bulbo = this.ui.bulbos[i];
+      if (!bulbo) return;
+      bulbo.classList.toggle("luce", foco.responde !== false && propio.state !== false);
+      bulbo.style.setProperty("--l", luz);
+      bulbo.style.setProperty("--dl", (propio.dimming || 100) / 100);
+    });
+  }
+
   pintar() {
     const e = this.estado;
     const prendido = e.state !== false;
-    const color = colorDeLuz(e, this.fase);
-    const d = (e.dimming || 100) / 100;
-    this.raiz.style.setProperty("--c", util.rgb(color));
-    this.raiz.style.setProperty("--dg", prendido ? d : 0);
-    this.raiz.classList.toggle("encendido", prendido);
-
-    this.focos.forEach((foco, i) => {
-      const propio = this.sincronizados ? e : { ...e, ...(foco.estado || {}) };
-      const luce = foco.responde !== false && propio.state !== false;
-      const bulbo = this.ui.bulbos[i];
-      if (!bulbo) return;
-      bulbo.classList.toggle("luce", luce);
-      bulbo.style.setProperty("--l", util.rgb(colorDeLuz(propio, this.fase)));
-      bulbo.style.setProperty("--dl", (propio.dimming || 100) / 100);
-    });
-
     for (const { b, modo } of this.ui.botonesModo) b.classList.toggle("activo", modo === this.modo);
     this.ui.panelBlanco.style.display = this.modo === "blanco" ? "" : "none";
     this.ui.panelColor.style.display = this.modo === "color" ? "flex" : "none";
@@ -342,10 +347,11 @@ class VistaLuces {
     }
     this.pintarEscenas();
     this.pintarFocos();
+    this.pintarLuz();
 
     const animada = prendido && (e.sceneId === 4 || e.sceneId === 5) && this.raiz.isConnected;
     if (animada && !this.animacion) {
-      this.animacion = setInterval(() => { this.fase++; this.pintar(); }, e.sceneId === 4 ? 700 : 300);
+      this.animacion = setInterval(() => { this.fase++; this.pintarLuz(); }, e.sceneId === 4 ? 700 : 300);
     }
     if (!animada) this.detenerAnimacion();
   }

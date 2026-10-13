@@ -43,3 +43,11 @@ def test_mostrar_y_ocultar_avisan_la_visibilidad():
     control.ocultar()
     control.mostrar()
     assert cambios == [False, True]
+
+
+def test_cerrar_oculta_aunque_falle_el_aviso():
+    # Si ocultar falla (p. ej. el bucle no contesta a tiempo), Alt+F4 igual NO cierra el programa.
+    def falla():
+        raise TimeoutError
+    control = main.ControlVentana(VentanaFalsa(), visible=True, al_ocultar=falla)
+    assert control.al_cerrar() is False

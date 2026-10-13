@@ -68,8 +68,10 @@ class GrupoWiz:
         self._ubicaciones: dict[str, tuple[str, int]] = {}
         self._candado_busqueda = asyncio.Lock()
         self._tarea_consulta: asyncio.Task | None = None
+        self._consulta_deseada = False  # lo último que se pidió con visible(): manda aunque las llamadas se crucen
         self._ultima_conexion = None
         self._tocado_por_separado = False  # un foco recibió una orden propia y no se volvió a sincronizar
+        self._ordenes = 0  # sube al empezar y al terminar cada orden: una consulta que se cruzó con una no pisa nada
 
     @property
     def sincronizados(self) -> bool:
@@ -85,7 +87,11 @@ class GrupoWiz:
         destinos = [f for f in self.focos if mac is None or f["mac"] == mac]
         if not destinos:
             raise KeyError("Foco desconocido")
-        resultados = await asyncio.gather(*(self._enviar_a(f, mensaje, params) for f in destinos))
+        self._ordenes += 1
+        try:
+            resultados = await asyncio.gather(*(self._enviar_a(f, mensaje, params) for f in destinos))
+        finally:
+            self._ordenes += 1
         if mac is None and any(resultados):
             self.estado = combinar(self.estado, params)
         elif mac is not None and any(resultados):
@@ -114,27 +120,33 @@ class GrupoWiz:
     # ---- lectura ----
     async def consultar(self) -> None:
         mensaje = p.armar_lectura("getPilot")
+        ordenes = self._ordenes
         respuestas = await asyncio.gather(*(self._pedir(f, mensaje, "getPilot") for f in self.focos))
-        for foco, respuesta in zip(self.focos, respuestas):
-            if respuesta and isinstance(respuesta.get("result"), dict):
-                foco["estado"] = params_de_pilot(respuesta["result"])
-        if all(f["responde"] for f in self.focos):
-            self._tocado_por_separado = False  # se leyó el estado real de todos: decide la comparación
-        primero = next((f for f in self.focos if f["responde"]), None)
-        if primero is not None:
-            self.estado = dict(primero["estado"])
+        if ordenes == self._ordenes:  # si una orden se cruzó con la consulta, lo leído puede ser viejo
+            for foco, respuesta in zip(self.focos, respuestas):
+                if respuesta and isinstance(respuesta.get("result"), dict):
+                    foco["estado"] = params_de_pilot(respuesta["result"])
+            if all(f["responde"] for f in self.focos):
+                self._tocado_por_separado = False  # se leyó el estado real de todos: decide la comparación
+            primero = next((f for f in self.focos if f["responde"]), None)
+            if primero is not None:
+                self.estado = dict(primero["estado"])
         self._actualizar_conexion()
         self._emitir_estado()
 
     async def visible(self, si: bool) -> None:
         """Con la pestaña visible consulta cada `intervalo` s; oculta, no consulta nada."""
-        if si and (self._tarea_consulta is None or self._tarea_consulta.done()):
-            self._tarea_consulta = asyncio.create_task(self._consultar_siempre())
-        elif not si and self._tarea_consulta is not None:
-            self._tarea_consulta.cancel()
+        self._consulta_deseada = si
+        tarea = self._tarea_consulta
+        if not si and tarea is not None:
+            tarea.cancel()
             with contextlib.suppress(asyncio.CancelledError):
-                await self._tarea_consulta
-            self._tarea_consulta = None
+                await tarea
+            if self._tarea_consulta is tarea:
+                self._tarea_consulta = None
+        # Mientras se esperaba la cancelación pudo llegar un visible(True): se respeta el último pedido.
+        if self._consulta_deseada and (self._tarea_consulta is None or self._tarea_consulta.done()):
+            self._tarea_consulta = asyncio.create_task(self._consultar_siempre())
 
     async def reintentar(self) -> None:
         self._ultima_busqueda = -math.inf
@@ -162,10 +174,18 @@ class GrupoWiz:
             await asyncio.sleep(self._intervalo)
 
     async def _pedir(self, foco: dict, mensaje: bytes, metodo: str) -> dict | None:
-        respuesta = await self._pedir_ip(foco, mensaje, metodo)
+        respuesta = self._si_es_este(foco, await self._pedir_ip(foco, mensaje, metodo))
         if respuesta is None and await self._reubicar(foco):
-            respuesta = await self._pedir_ip(foco, mensaje, metodo)
+            respuesta = self._si_es_este(foco, await self._pedir_ip(foco, mensaje, metodo))
         foco["responde"] = respuesta is not None
+        return respuesta
+
+    @staticmethod
+    def _si_es_este(foco: dict, respuesta: dict | None) -> dict | None:
+        """Descarta la respuesta de OTRO foco que quedó con la IP guardada (getPilot trae la MAC)."""
+        resultado = (respuesta or {}).get("result")
+        if isinstance(resultado, dict) and isinstance(resultado.get("mac"), str)                 and resultado["mac"].lower().replace(":", "") != foco["mac"].lower().replace(":", ""):
+            return None
         return respuesta
 
     async def _pedir_ip(self, foco: dict, mensaje: bytes, metodo: str) -> dict | None:
