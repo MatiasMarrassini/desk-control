@@ -1,0 +1,164 @@
+<h2>Pestaña "Cuarto": opción B, versión 2</h2>
+<p class="subtitle">Con el área de las luces más baja (112 px en vez de 168) para dar más lugar a los controles. Es interactiva: probá ⏻, Blanco/Color, el brillo, las escenas (Fiesta y Chimenea se animan) y la sección "Focos". Los focos dibujados brillan con el color y el brillo reales.</p>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="vidrio" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".45" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="rosca" x1="0" x2="1"><stop offset="0" stop-color="#6b6b70"/><stop offset=".35" stop-color="#e9e9ec"/><stop offset=".7" stop-color="#9a9aa0"/><stop offset="1" stop-color="#55555a"/></linearGradient>
+    <symbol id="foco" viewBox="0 0 60 92">
+      <!-- vidrio (el color lo pone CSS con --luz) -->
+      <path class="ampolla" d="M30 2 C14 2 3 14 3 29 C3 40 9 46 14 53 C17 57 18 61 18 65 H42 C42 61 43 57 46 53 C51 46 57 40 57 29 C57 14 46 2 30 2 Z"/>
+      <path d="M30 2 C14 2 3 14 3 29 C3 40 9 46 14 53 C17 57 18 61 18 65 H42 C42 61 43 57 46 53 C51 46 57 40 57 29 C57 14 46 2 30 2 Z" fill="url(#vidrio)" opacity=".55"/>
+      <path d="M30 2 C14 2 3 14 3 29 C3 40 9 46 14 53 C17 57 18 61 18 65 H42 C42 61 43 57 46 53 C51 46 57 40 57 29 C57 14 46 2 30 2 Z" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/>
+      <!-- rosca -->
+      <rect x="18" y="65" width="24" height="6" rx="2" fill="url(#rosca)"/>
+      <rect x="19" y="71" width="22" height="5" rx="2" fill="url(#rosca)"/>
+      <rect x="20" y="76" width="20" height="5" rx="2" fill="url(#rosca)"/>
+      <path d="M22 81 H38 L34 88 H26 Z" fill="#2c2c30"/>
+    </symbol>
+  </defs>
+</svg>
+
+<style>
+  .w { width: 380px; height: 600px; border-radius: 16px; background: #1c1c20; border: 1px solid rgba(255,255,255,.08); color: #e8e8ea;
+       font: 13px "Segoe UI", sans-serif; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+  .top { display: flex; align-items: center; gap: 6px; padding: 10px 10px 8px 12px; }
+  .tab { padding: 6px 12px; border-radius: 999px; font-size: 12px; color: #9a9aa2; display: inline-flex; gap: 6px; align-items: center; }
+  .tab.on { background: rgba(255,255,255,.07); color: #fff; }
+  .pt { width: 7px; height: 7px; border-radius: 50%; background: #777; } .pt.v { background: #4ade80; }
+  .g { flex: 1; } .ic { color: #9a9aa2; width: 26px; text-align: center; }
+  .chip { display: inline-flex; gap: 6px; align-items: center; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.04); font-size: 11px; color: #9a9aa2; }
+  .card { background: rgba(255,255,255,.04); border-radius: 12px; padding: 9px 11px; }
+  .lb { display: flex; justify-content: space-between; font-size: 11px; color: #77777f; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .lb b { color: #e8e8ea; text-transform: none; letter-spacing: 0; font-size: 12px; }
+  .pw { width: 54px; height: 54px; border-radius: 50%; border: none; cursor: pointer; background: rgba(255,255,255,.07); color: #999; display: flex; align-items: center; justify-content: center; transition: all .3s; }
+  .pw svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+  .encendido .pw { background: rgba(var(--luz),.18); color: rgb(var(--luz)); box-shadow: 0 0 18px rgba(var(--luz),.45); }
+  .seg { display: flex; background: rgba(0,0,0,.25); border-radius: 8px; padding: 2px; margin-bottom: 8px; }
+  .seg button { flex: 1; border: none; background: none; color: #9a9aa2; padding: 4px; border-radius: 6px; cursor: pointer; font: inherit; font-size: 12px; }
+  .seg button.on { background: rgba(255,255,255,.1); color: #fff; }
+  input[type=range] { width: 100%; accent-color: rgb(var(--luz)); }
+  .temp { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 6px; background: linear-gradient(90deg, rgb(255,160,70), rgb(255,244,229), rgb(190,220,255)); }
+  .temp::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #1c1c20; box-shadow: 0 0 0 1px #888; }
+  .sw { display: flex; gap: 7px; flex-wrap: wrap; } .sw i { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; }
+  .sw i.rb { background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red); }
+  .esc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .esc button { border: none; cursor: pointer; border-radius: 10px; padding: 6px 2px; background: rgba(255,255,255,.05); color: #ccc; font: inherit; font-size: 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .esc button span { font-size: 16px; } .esc button.on { background: rgba(var(--luz),.18); color: #fff; box-shadow: inset 0 0 0 1px rgba(var(--luz),.6); }
+  .focos-t { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .focos-l { display: none; margin-top: 8px; gap: 6px; flex-direction: column; } .abierto .focos-l { display: flex; }
+  .fila { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,.2); border-radius: 8px; padding: 6px 8px; font-size: 12px; }
+  .fila .mini { width: 14px; height: 14px; border-radius: 50%; background: rgb(var(--l)); box-shadow: 0 0 8px rgba(var(--l),.8); }
+  .fila.apagado .mini { background: #444; box-shadow: none; }
+  .tg { margin-left: auto; width: 32px; height: 18px; border-radius: 999px; background: #444; position: relative; cursor: pointer; }
+  .tg::after { content: ""; position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: #ddd; transition: left .2s; }
+  .tg.on { background: #4ade80; } .tg.on::after { left: 16px; }
+  .sync { border: none; background: rgba(255,255,255,.07); color: #ddd; border-radius: 8px; padding: 5px; cursor: pointer; font: inherit; font-size: 11px; }
+  /* focos dibujados */
+  .bulbo { position: relative; } .bulbo svg { display: block; overflow: visible; }
+  .ampolla { fill: var(--vidrio); transition: fill .4s; }
+  .bulbo { --vidrio: rgba(70,70,76,.55); }
+  .bulbo.luce { --vidrio: rgba(var(--l), calc(.35 + var(--d) * .65)); }
+  .bulbo.luce svg { filter: drop-shadow(0 0 calc(var(--d) * 14px) rgba(var(--l), .9)) drop-shadow(0 0 calc(var(--d) * 38px) rgba(var(--l), .55)); }
+  .bulbo .halo { position: absolute; left: 50%; top: 32%; width: 220%; aspect-ratio: 1; transform: translate(-50%,-50%); border-radius: 50%;
+     background: radial-gradient(circle, rgba(var(--l), calc(var(--d) * .28)), transparent 65%); opacity: 0; transition: opacity .4s; pointer-events: none; }
+  .bulbo.luce .halo { opacity: 1; }
+  /* A: columna */
+  .A .cuerpo { display: flex; gap: 12px; padding: 0 12px 12px; flex: 1; min-height: 0; }
+  .A .col { width: 70px; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; }
+  .A .col .bulbo svg { width: 54px; height: 83px; }
+  .A .ctrls { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; overflow-y: auto; }
+  /* B: ambiente */
+  .B .heroe { height: 112px; position: relative; display: flex; justify-content: center; gap: 64px; align-items: flex-start; overflow: hidden;
+     background: radial-gradient(ellipse at 50% 120%, rgba(var(--luz), calc(var(--dg) * .22)), transparent 70%); transition: background .4s; }
+  .B .colgante { display: flex; flex-direction: column; align-items: center; }
+  .B .cable { width: 2px; height: 16px; background: linear-gradient(#000, #444); }
+  .B .heroe .bulbo svg { width: 40px; height: 62px; transform: rotate(180deg); }
+  .B .heroe .bulbo .halo { top: 68%; }
+  .B .ctrls { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; min-height: 0; }
+  .fila2 { display: flex; gap: 10px; align-items: center; }
+  .par { display: flex; gap: 30px; justify-content: center; padding: 18px; background: #111; flex-wrap: wrap; }
+  .nota { font-size: 12px; color: #888; text-align: center; margin-top: 6px; }
+</style>
+
+<div class="cards" style="grid-template-columns: 1fr; max-width: 460px; margin: 0 auto">
+  <div class="card" data-choice="ambiente" onclick="toggleSelect(this)">
+    <div class="card-image par"><div class="w B" data-luces></div></div>
+    <div class="card-body"><h3>B · Ambiente arriba</h3><p>Los dos focos colgando arriba, con el "cuarto" iluminado del color elegido; los controles debajo (con scroll si hace falta).</p></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const ESCENAS = [["☀️","Luz de día",[255,244,229]],["📖","Lectura",[255,236,210]],["🛋️","Relax",[255,190,120]],["🌙","Nocturna",[255,140,60]],
+                   ["🎉","Fiesta",null],["🔥","Chimenea",[255,110,30]],["🌊","Océano",[0,140,255]]];
+  const COLORES = [[255,0,0],[0,80,255],[0,255,0],[160,0,255],[255,230,0],[255,120,0],[0,220,255]];
+  const tempRgb = (k) => { const t = (k - 2200) / 4300; const a = [255,160,70], m = [255,244,229], b = [190,220,255];
+    const [x, y, u] = t < .5 ? [a, m, t * 2] : [m, b, (t - .5) * 2]; return x.map((v, i) => Math.round(v + (y[i] - v) * u)); };
+  const ico = '<svg viewBox="0 0 24 24"><path d="M12 4v7.5"/><path d="M6.6 7a7.6 7.6 0 1 0 10.8 0"/></svg>';
+  const bulbo = (cls) => `<div class="bulbo ${cls}"><div class="halo"></div><svg viewBox="0 0 60 92"><use href="#foco"/></svg></div>`;
+
+  document.querySelectorAll("[data-luces]").forEach((w) => {
+    const A = w.classList.contains("A");
+    const st = { on: true, modo: "blanco", temp: 4200, color: [0,80,255], dim: 100, esc: "Luz de día", focos: [true, true], abierto: false };
+    const controles = `
+      <div class="fila2"><button class="pw" data-pw>${ico}</button><div class="g"></div><span class="chip"><span class="pt v"></span>Conectadas · 2 focos</span></div>
+      <div class="card"><div class="seg"><button data-modo="blanco">Blanco</button><button data-modo="color">Color</button></div>
+        <div data-p-blanco><input class="temp" type="range" min="2200" max="6500" step="100" data-temp><div class="lb" style="margin:4px 0 0"><span>Cálido</span><b data-k></b><span>Frío</span></div></div>
+        <div data-p-color class="sw"></div></div>
+      <div class="card"><div class="lb"><span>Brillo</span><b data-dv></b></div><input type="range" min="10" max="100" data-dim></div>
+      <div class="card"><div class="lb"><span>Escenas</span><span style="text-transform:none;letter-spacing:0;color:#aaa">Todas ▾</span></div><div class="esc"></div></div>
+      <div class="card" data-focos><div class="focos-t"><span>💡 Focos (2)</span><span>▾</span></div><div class="focos-l">
+        <div class="fila" data-f="0"><span class="mini"></span>Mesa de luz<span class="tg" data-tg="0"></span></div>
+        <div class="fila" data-f="1"><span class="mini"></span>Escritorio<span class="tg" data-tg="1"></span></div>
+        <button class="sync" data-sync>⟳ Sincronizar los dos</button></div></div>`;
+    const cabecera = `<div class="top"><span class="tab">⚔ Sable Obi-Wan Kenobi <span class="pt"></span></span><span class="tab on">💡 Cuarto <span class="pt v"></span></span><span class="g"></span><span class="ic">＋</span><span class="ic">–</span></div>`;
+    w.innerHTML = cabecera + (A
+      ? `<div class="cuerpo"><div class="col">${bulbo("f0")}${bulbo("f1")}</div><div class="ctrls">${controles}</div></div>`
+      : `<div class="heroe"><div class="colgante"><div class="cable"></div>${bulbo("f0")}</div><div class="colgante"><div class="cable"></div>${bulbo("f1")}</div></div><div class="ctrls">${controles}</div>`);
+
+    const $ = (s) => w.querySelector(s);
+    COLORES.forEach((c) => { const i = document.createElement("i"); i.style.background = `rgb(${c})`; i.onclick = (e) => { e.stopPropagation(); st.color = c; st.esc = null; pintar(); }; $("[data-p-color]").append(i); });
+    const rb = document.createElement("i"); rb.className = "rb"; $("[data-p-color]").append(rb);
+    ESCENAS.forEach(([ic, nom]) => { const b = document.createElement("button"); b.innerHTML = `<span>${ic}</span>${nom}`; b.dataset.esc = nom; b.onclick = (e) => { e.stopPropagation(); st.esc = nom; st.on = true; pintar(); }; $(".esc").append(b); });
+    const mas = document.createElement("button"); mas.innerHTML = "<span>⋯</span>Todas"; $(".esc").append(mas);
+
+    let anim = null, fase = 0;
+    function colorActual() {
+      const e = ESCENAS.find((x) => x[1] === st.esc);
+      if (e && e[1] === "Fiesta") return [[255,0,80],[0,200,255],[255,200,0],[140,0,255]][fase % 4];
+      if (e && e[1] === "Chimenea") return [255, 90 + (fase * 37) % 50, 20];
+      if (e) return e[2];
+      return st.modo === "blanco" ? tempRgb(st.temp) : st.color;
+    }
+    function pintar() {
+      const c = colorActual().join(","), d = st.dim / 100;
+      w.style.setProperty("--luz", c); w.style.setProperty("--dg", st.on ? d : 0);
+      w.classList.toggle("encendido", st.on);
+      ["f0", "f1"].forEach((f, i) => { const b = w.querySelector("." + f); const luce = st.on && st.focos[i];
+        b.classList.toggle("luce", luce); b.style.setProperty("--l", c); b.style.setProperty("--d", d);
+        const fila = w.querySelector(`[data-f="${i}"]`); fila.style.setProperty("--l", c); fila.classList.toggle("apagado", !luce);
+        w.querySelector(`[data-tg="${i}"]`).classList.toggle("on", luce); });
+      w.querySelectorAll("[data-modo]").forEach((b) => b.classList.toggle("on", b.dataset.modo === st.modo));
+      $("[data-p-blanco]").style.display = st.modo === "blanco" ? "" : "none";
+      $("[data-p-color]").style.display = st.modo === "color" ? "flex" : "none";
+      $("[data-temp]").value = st.temp; $("[data-k]").textContent = `${st.temp} K`;
+      $("[data-dim]").value = st.dim; $("[data-dv]").textContent = `${st.dim}%`;
+      w.querySelectorAll(".esc [data-esc]").forEach((b) => b.classList.toggle("on", b.dataset.esc === st.esc));
+      $("[data-focos]").classList.toggle("abierto", st.abierto);
+      const animada = st.on && (st.esc === "Fiesta" || st.esc === "Chimenea");
+      if (animada && !anim) anim = setInterval(() => { fase++; pintar(); }, st.esc === "Fiesta" ? 700 : 300);
+      if (!animada && anim) { clearInterval(anim); anim = null; }
+    }
+    $("[data-pw]").onclick = (e) => { e.stopPropagation(); st.on = !st.on; pintar(); };
+    w.querySelectorAll("[data-modo]").forEach((b) => b.onclick = (e) => { e.stopPropagation(); st.modo = b.dataset.modo; st.esc = null; pintar(); });
+    $("[data-temp]").oninput = (e) => { st.temp = +e.target.value; st.esc = null; pintar(); };
+    $("[data-dim]").oninput = (e) => { st.dim = +e.target.value; pintar(); };
+    $(".focos-t").onclick = (e) => { e.stopPropagation(); st.abierto = !st.abierto; pintar(); };
+    w.querySelectorAll("[data-tg]").forEach((t) => t.onclick = (e) => { e.stopPropagation(); const i = +t.dataset.tg; st.focos[i] = !st.focos[i]; pintar(); });
+    $("[data-sync]").onclick = (e) => { e.stopPropagation(); st.focos = [true, true]; pintar(); };
+    w.addEventListener("click", (e) => { if (e.target.tagName === "INPUT") e.stopPropagation(); });
+    pintar();
+  });
+})();
+</script>
