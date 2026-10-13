@@ -41,5 +41,8 @@ Los eventos de la placa se asignan a acciones de botón y movimiento:
 - [x] Ver si los cambios persisten sin `SaveCfg`: sí, se guardan solos
 - [x] PowerOn=false y CurrentSoundPackageNo funcionan (el color es por fuente)
 - [ ] Probar Brightness y disparar efectos (Clash, Blaster…)
-- [ ] Diseñar la app de control
+- [x] Diseñar e implementar la etapa 1 del widget (sable). Consumo medido (2026-10-12): RAM 432 MB visible / 432 MB oculto (Working Set; privada ≈225 MB), CPU 0,01–0,02 %
+- [ ] Consumo: la RAM privada (≈225 MB) supera el objetivo de 200 MB; casi todo es WebView2 (6 procesos). Investigar opciones de WebView2 para reducirlo sin perder las animaciones
+- [ ] Etapa 2: focos Wiz (controles básicos, escenas, grupo "Cuarto")
+- [ ] Mango de Obi-Wan detallado (a partir de fotos del sable real)
 - [ ] Ver el sentido real de FileTransfer download/upload

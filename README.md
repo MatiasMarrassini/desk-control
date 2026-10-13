@@ -10,7 +10,7 @@ Es una alternativa a la app oficial Xeno Configurator.
 
 - ✅ Protocolo Bluetooth de las placas Xeno3 documentado y verificado con un sable real: [PROTOCOLO.md](PROTOCOLO.md)
 - ✅ Scripts de prueba en Python: [pruebas/](pruebas/)
-- 🛠️ Widget en desarrollo. Diseño: [docs/superpowers/specs/](docs/superpowers/specs/)
+- ✅ Widget de escritorio para el sable (etapa 1). Diseño: [docs/superpowers/specs/](docs/superpowers/specs/)
 - 🔜 Control de focos Wiz
 
 ## Probar los scripts
@@ -29,3 +29,18 @@ con la variable de entorno `XENO_SABLE` y la dirección que muestra `escanear.py
 
 > ⚠️ No envíes `Reset`, `HardwareType`, `SoftwareType`, `ButtonNum` ni comandos de firmware sin entender
 > bien qué hacen. Ver la sección de comandos peligrosos en PROTOCOLO.md.
+
+## Usar el widget
+
+```bash
+python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt
+.venv/Scripts/pythonw desk_control.pyw
+```
+
+- **Ctrl + Shift + Espacio** muestra u oculta el widget (se cambia en `%APPDATA%\DeskControl\config.json`).
+- El icono de la bandeja permite agregar dispositivos, activar o desactivar el arranque con Windows y salir.
+- La primera vez, tocá **Buscar dispositivos** con el sable encendido y sin el teléfono conectado.
+- Registro de errores: `%APPDATA%\DeskControl\widget.log`.
+
+Pruebas: `.venv/Scripts/python -m pip install -r requirements-dev.txt` y luego `.venv/Scripts/python -m pytest`.
