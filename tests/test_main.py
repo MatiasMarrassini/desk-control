@@ -30,3 +30,16 @@ def test_la_interfaz_se_carga_sin_servidor_http():
     url = main.url_interfaz()
     assert url.startswith("file:///") and url.endswith("/widget/ui/index.html")
     assert is_local_url(url) is False
+
+
+class VentanaQueSeMuestra(VentanaFalsa):
+    def show(self):
+        pass
+
+
+def test_mostrar_y_ocultar_avisan_la_visibilidad():
+    cambios = []
+    control = main.ControlVentana(VentanaQueSeMuestra(), visible=True, al_visibilidad=cambios.append)
+    control.ocultar()
+    control.mostrar()
+    assert cambios == [False, True]

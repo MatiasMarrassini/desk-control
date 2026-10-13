@@ -11,6 +11,7 @@ from widget.bucle import BucleAsync
 from widget.config import CARPETA, Config
 from widget.dispositivos.sesion import SesionSable
 from widget.dispositivos.transporte import TransporteBleak
+from widget.dispositivos.wiz import GrupoWiz
 from widget.escritorio import autoarranque
 from widget.escritorio.atajo import AtajoGlobal, AtajoInvalido
 from widget.escritorio.bandeja import crear_bandeja
@@ -41,9 +42,10 @@ def configurar_registro(debug: bool) -> None:
 class ControlVentana:
     """Mostrar/ocultar. El atajo oculta solo si el widget ya está al frente; si está tapado, lo trae."""
 
-    def __init__(self, ventana, visible: bool, al_ocultar=None):
+    def __init__(self, ventana, visible: bool, al_ocultar=None, al_visibilidad=None):
         self.ventana = ventana
         self.visible = visible
+        self.al_visibilidad = al_visibilidad  # avisa si la ventana se ve (las luces solo se consultan así)
         self.al_ocultar = al_ocultar or self.ocultar  # ocultar "completo" (p. ej. guardando la posición)
         self.saliendo = False  # lo activa "Salir" de la bandeja: solo entonces cerrar la ventana cierra el programa
 
@@ -64,6 +66,8 @@ class ControlVentana:
     def mostrar(self) -> None:
         self.ventana.show()
         self.visible = True
+        if self.al_visibilidad:
+            self.al_visibilidad(True)
         hwnd = buscar_ventana(TITULO)
         if hwnd:
             redondear_esquinas(hwnd)
@@ -72,6 +76,8 @@ class ControlVentana:
     def ocultar(self) -> None:
         self.ventana.hide()
         self.visible = False
+        if self.al_visibilidad:
+            self.al_visibilidad(False)
 
     def alternar(self) -> None:
         hwnd = buscar_ventana(TITULO)
@@ -100,11 +106,13 @@ def main(argv=None) -> int:
     bucle = BucleAsync()
     bucle.iniciar()
 
-    def crear_sesion(dispositivo: dict) -> SesionSable:
+    def crear_controlador(dispositivo: dict):
+        if dispositivo["tipo"] == "wiz_grupo":
+            return GrupoWiz(dispositivo["focos"], estado_inicial=dispositivo.get("ultimo_estado"))
         return SesionSable(lambda: TransporteBleak(dispositivo["direccion"]),
                            estado_inicial=dispositivo.get("ultimo_estado"))
 
-    puente = Puente(config, bucle, crear_sesion)
+    puente = Puente(config, bucle, crear_controlador)
 
     posicion = config.datos["ventana"]
     x, y = posicion_inicial(posicion.get("x"), posicion.get("y"), listar_areas_de_trabajo())
@@ -112,6 +120,8 @@ def main(argv=None) -> int:
                                     resizable=False, frameless=True, easy_drag=False, hidden=args.oculto,
                                     background_color="#1C1C20")
     control = ControlVentana(ventana, visible=not args.oculto)
+    control.al_visibilidad = puente._ventana_visible
+    puente._ventana_visible(not args.oculto)
 
     def guardar_posicion(*_args) -> None:
         if isinstance(ventana.x, int) and isinstance(ventana.y, int):
