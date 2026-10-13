@@ -104,3 +104,7 @@ Si tenés más de un sable, fijá cuál usar con la variable de entorno `XENO_SA
 .venv/Scripts/python -m pip install -r requirements-dev.txt
 .venv/Scripts/python -m pytest
 ```
+
+## Licencia
+
+[MIT](LICENSE).
