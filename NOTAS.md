@@ -46,3 +46,14 @@ Los eventos de la placa se asignan a acciones de botón y movimiento:
 - [ ] Etapa 2: focos Wiz (controles básicos, escenas, grupo "Cuarto")
 - [x] Mango de Obi-Wan detallado (widget/ui/mango-obi-wan.svg, estilo metálico, a partir de la foto del sable real)
 - [ ] Ver el sentido real de FileTransfer download/upload
+
+## Focos WiZ (etapa 2): verificado 2026-10-13
+- La app WiZ (Android) es híbrida React Native + Flutter; el APK extraído es solo la base (sin las librerías nativas),
+  pero no hace falta: el protocolo local de WiZ es público (JSON por UDP, puerto 38899).
+- La app tiene la opción "Permitir comunicación local (UDP)" (activada en esta casa). Con ella, cualquier dispositivo
+  de la red puede controlar los focos **a la vez** que el celular: no hay emparejamiento exclusivo como en Bluetooth.
+- 2 focos en la red: modelo `ESP24_SHRGBC_01` (color + blanco regulable), firmware 1.38.0, mismo `homeId`,
+  `roomId` y `groupId` (el grupo "Cuarto" se puede leer de los propios focos).
+- Probado: `getPilot`, `getSystemConfig` (lectura) y `setPilot` con brillo, RGB, temperatura de blanco y escena
+  (`sceneId`). Cada orden responde `{"result":{"success":true}}`.
+- Scripts: `pruebas/wiz_descubrir.py` (difusión, solo lectura) y `pruebas/wiz_enviar.py` (setPilot a una o varias IP).
