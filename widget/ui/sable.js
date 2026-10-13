@@ -41,7 +41,8 @@ class VistaSable {
     this.ui.pwr.title = "Encender / apagar la hoja";
     this.ui.pwr.addEventListener("click", () => this.enviar("PowerOn", !this.d.estado.PowerOn));
     filaPwr.append(this.ui.pwr);
-    controles.append(filaPwr, this.tarjetaColor(), this.deslizador("Volume", "Volumen"),
+    // El volumen no necesita respuesta en vivo: se envía al soltar o tras 400 ms quieto (un solo comando por gesto).
+    controles.append(filaPwr, this.tarjetaColor(), this.deslizador("Volume", "Volumen", { alQuedarseQuieto: 400 }),
       this.deslizador("Brightness", "Brillo"), this.tarjetaFuente());
     escenario.append(sable, controles);
 
@@ -75,7 +76,9 @@ class VistaSable {
     return t;
   }
 
-  deslizador(clave, titulo) {
+  // Por defecto envía como máximo cada 150 ms mientras se arrastra (respuesta en vivo).
+  // Con `alQuedarseQuieto: ms`, solo envía cuando la barra queda quieta `ms` o al soltarla.
+  deslizador(clave, titulo, { alQuedarseQuieto = 0 } = {}) {
     const t = util.el("div", "tarjeta");
     const etiqueta = util.el("div", "etiqueta");
     const valor = util.el("b", "valor");
@@ -84,15 +87,29 @@ class VistaSable {
     input.type = "range";
     input.min = "0";
     input.max = "100";
-    const enviarLimitado = util.limitar((v) => this.enviar(clave, v), 150);
+    let ultimoEnviado = null;
+    const enviarSiCambio = (v) => {
+      if (v === ultimoEnviado) return;
+      ultimoEnviado = v;
+      this.enviar(clave, v);
+    };
+    const enviarMientras = alQuedarseQuieto
+      ? util.esperarQuieto(enviarSiCambio, alQuedarseQuieto)
+      : util.limitar((v) => this.enviar(clave, v), 150);
     input.addEventListener("input", () => {
       this.arrastrando = clave;
       valor.textContent = `${input.value}%`;
-      enviarLimitado(Number(input.value));
+      enviarMientras(Number(input.value));
     });
     input.addEventListener("change", () => {
       this.arrastrando = null;
-      this.enviar(clave, Number(input.value));
+      if (alQuedarseQuieto) {
+        enviarMientras.cancelar();
+        enviarSiCambio(Number(input.value));
+        ultimoEnviado = null;  // el control de repetidos vale solo dentro de un mismo gesto
+      } else {
+        this.enviar(clave, Number(input.value));
+      }
     });
     t.append(etiqueta, input);
     this.ui[clave] = { input, valor };

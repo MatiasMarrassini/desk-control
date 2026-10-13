@@ -17,6 +17,16 @@ const util = {
       pendiente = setTimeout(() => { ultimo = Date.now(); fn(...args); }, ms - (ahora - ultimo));
     };
   },
+  // Ejecuta fn recién cuando pasan `ms` sin llamadas nuevas. `.cancelar()` descarta la pendiente.
+  esperarQuieto(fn, ms) {
+    let pendiente = null;
+    const llamar = (...args) => {
+      clearTimeout(pendiente);
+      pendiente = setTimeout(() => fn(...args), ms);
+    };
+    llamar.cancelar = () => clearTimeout(pendiente);
+    return llamar;
+  },
   rgb(c) { return `${c[0]},${c[1]},${c[2]}`; },
   aviso(texto, tipo = "info") {
     const a = document.getElementById("aviso");
