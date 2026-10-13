@@ -2,24 +2,7 @@
 // Estado global de la ventana, pestañas, indicador y eventos que llegan desde Python.
 const app = { dispositivos: [], activo: null, vistas: new Map(), modo: "dispositivo", listo: false };
 
-// Vista mínima de un dispositivo. La tarea 9 la reemplaza por VistaSable (misma interfaz).
-class VistaBasica {
-  constructor(d) {
-    this.d = d;
-    this.estadoConexion = d.conexion;
-    this.raiz = util.el("section", "vacio");
-    this.texto = util.el("p");
-    this.raiz.append(util.el("div", "vacio-icono", "⚔"), util.el("b", null, d.nombre), this.texto);
-    this.conexion({ estado: d.conexion });
-  }
-  estadoRecibido() {}
-  errorRecibido() {}
-  fuentesRecibidas() {}
-  conexion(info) { this.estadoConexion = info.estado; this.texto.textContent = `Conexión: ${info.estado}`; }
-  indicador() { return { texto: this.estadoConexion, clase: this.estadoConexion === "conectado" ? "bien" : "espera" }; }
-}
-
-function crearVista(d) { return new VistaBasica(d); }
+function crearVista(d) { return new VistaSable(d); }
 
 async function recargarDatos() {
   const datos = await pywebview.api.inicial();

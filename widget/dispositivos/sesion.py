@@ -104,6 +104,11 @@ class SesionSable:
                 sable.al_error = self._al_error
                 try:
                     await sable.conectar()
+                except asyncio.CancelledError:
+                    # Se cerró la sesión a mitad de la conexión: soltar el sable antes de propagar la cancelación.
+                    with contextlib.suppress(Exception):
+                        await asyncio.shield(sable.desconectar())
+                    raise
                 except Exception as error:
                     log.info("Intento %d de conexión fallido: %r", intento, error)
                     with contextlib.suppress(Exception):

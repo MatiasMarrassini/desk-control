@@ -102,6 +102,16 @@ async def test_corte_durante_envio_avisa_y_reconecta():
     await s.cerrar()
 
 
+async def test_cerrar_durante_la_conexion_no_deja_el_sable_conectado():
+    # El sable conecta pero nunca responde el saludo: cerrar en ese momento debe soltar la conexión.
+    s, creados, _ = sesion_con(SableSimulado(responde_saludo=False))
+    await s.pedir("Volume", 30)
+    await esperar_hasta(lambda: creados and creados[0].conectado)
+    await s.cerrar()
+    await asyncio.sleep(0.01)
+    assert not creados[0].conectado
+
+
 async def test_error_del_sable_se_emite():
     s, _, eventos = sesion_con(SableSimulado(errores={"Volume": "fuera de rango"}))
     await s.pedir("Volume", 30)
