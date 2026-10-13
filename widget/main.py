@@ -16,8 +16,8 @@ from widget.escritorio import autoarranque
 from widget.escritorio.atajo import AtajoGlobal, AtajoInvalido
 from widget.escritorio.bandeja import crear_bandeja
 from widget.escritorio.instancia import adquirir_instancia_unica
-from widget.escritorio.ventana import (buscar_ventana, es_primer_plano, listar_areas_de_trabajo, posicion_inicial,
-                                       redondear_esquinas, traer_al_frente)
+from widget.escritorio.ventana import (buscar_ventana, es_primer_plano, fijar_memoria_baja, listar_areas_de_trabajo,
+                                       posicion_inicial, redondear_esquinas, traer_al_frente)
 from widget.puente import Puente
 
 TITULO = "Desk Control"
@@ -42,8 +42,9 @@ def configurar_registro(debug: bool) -> None:
 class ControlVentana:
     """Mostrar/ocultar. El atajo oculta solo si el widget ya está al frente; si está tapado, lo trae."""
 
-    def __init__(self, ventana, visible: bool, al_ocultar=None, al_visibilidad=None):
+    def __init__(self, ventana, visible: bool, al_ocultar=None, al_visibilidad=None, memoria_baja=fijar_memoria_baja):
         self.ventana = ventana
+        self.memoria_baja = memoria_baja  # oculta, WebView2 recorta memoria; visible, vuelve a lo normal
         self.visible = visible
         self.al_visibilidad = al_visibilidad  # avisa si la ventana se ve (las luces solo se consultan así)
         self.al_ocultar = al_ocultar or self.ocultar  # ocultar "completo" (p. ej. guardando la posición)
@@ -66,7 +67,14 @@ class ControlVentana:
         if hwnd:
             redondear_esquinas(hwnd)
 
+    def _memoria(self, baja: bool) -> None:
+        try:
+            self.memoria_baja(self.ventana, baja)
+        except Exception:
+            log.exception("Error al cambiar el nivel de memoria")  # es un ahorro: nunca frena mostrar/ocultar
+
     def mostrar(self) -> None:
+        self._memoria(False)
         self.ventana.show()
         self.visible = True
         if self.al_visibilidad:
@@ -81,6 +89,7 @@ class ControlVentana:
         self.visible = False
         if self.al_visibilidad:
             self.al_visibilidad(False)
+        self._memoria(True)
 
     def alternar(self) -> None:
         hwnd = buscar_ventana(TITULO)
@@ -123,6 +132,12 @@ def main(argv=None) -> int:
                                     resizable=False, frameless=True, easy_drag=False, hidden=args.oculto,
                                     background_color="#1C1C20")
     control = ControlVentana(ventana, visible=not args.oculto)
+
+    def al_cargar(*_args) -> None:
+        if not control.visible:  # arrancó oculto (con Windows): recortar memoria apenas WebView2 está listo
+            control._memoria(True)
+
+    ventana.events.loaded += al_cargar
     control.al_visibilidad = puente._ventana_visible
     puente._ventana_visible(not args.oculto)
 

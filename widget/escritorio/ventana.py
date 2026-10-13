@@ -1,7 +1,9 @@
-"""Ayudas de Win32 para la ventana: monitor vertical, esquinas redondeadas y primer plano."""
+"""Ayudas de Win32 para la ventana: monitor vertical, esquinas redondeadas, primer plano y memoria de WebView2."""
 import ctypes
+import logging
 from ctypes import wintypes
 
+log = logging.getLogger(__name__)
 _user32 = ctypes.WinDLL("user32", use_last_error=True)
 _dwmapi = ctypes.WinDLL("dwmapi")
 _user32.FindWindowW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR]
@@ -79,3 +81,27 @@ def traer_al_frente(hwnd: int) -> None:
 
 def es_primer_plano(hwnd: int) -> bool:
     return (_user32.GetForegroundWindow() or 0) == hwnd
+
+
+def fijar_memoria_baja(ventana, baja: bool) -> None:
+    """Pide a WebView2 que recorte memoria (oculta) o vuelva a lo normal (visible).
+
+    El control .NET solo se toca en el hilo de la interfaz: se encola con BeginInvoke y no se espera,
+    así ocultar nunca queda bloqueado por esto. Sin WebView2 listo (o con otro motor), no hace nada.
+    """
+    formulario = getattr(ventana, "native", None)
+    control = getattr(formulario, "webview", None)
+    if control is None:
+        return
+    from Microsoft.Web.WebView2.Core import CoreWebView2MemoryUsageTargetLevel as Nivel
+    from System import Action
+
+    def fijar() -> None:
+        try:
+            nucleo = control.CoreWebView2
+            if nucleo is not None:
+                nucleo.MemoryUsageTargetLevel = Nivel.Low if baja else Nivel.Normal
+        except Exception:
+            log.exception("No se pudo cambiar el nivel de memoria de WebView2")
+
+    formulario.BeginInvoke(Action(fijar))

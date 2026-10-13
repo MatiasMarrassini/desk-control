@@ -43,6 +43,19 @@ Los eventos de la placa se asignan a acciones de botón y movimiento:
 - [ ] Probar Brightness y disparar efectos (Clash, Blaster…)
 - [x] Diseñar e implementar la etapa 1 del widget (sable). Consumo medido (2026-10-12): RAM 432 MB visible / 432 MB oculto (Working Set; privada ≈225 MB), CPU 0,01–0,02 %
 - [ ] Consumo: la RAM privada (≈225 MB) supera el objetivo de 200 MB; casi todo es WebView2 (6 procesos). Investigar opciones de WebView2 para reducirlo sin perder las animaciones
+  - 2026-10-13: al ocultar se fija `CoreWebView2.MemoryUsageTargetLevel = Low` (y `Normal` al mostrar), vía
+    `ventana.native.webview` y `BeginInvoke` en el hilo de la interfaz. Medido con la config real (sable + focos),
+    arranque visible, oculto con Alt+F4 y un minuto de espera: privada 242 → 220 MB, Working Set 438 → 181 MB,
+    CPU 0 %. Arrancando ya oculto (`--oculto`) la privada casi no cambia (205 → 208; el renderer nunca pintó) pero
+    el Working Set baja 413 → 209 MB. Al volver a mostrarse se ve y responde normal.
+  - Reparto típico recién arrancado: GPU ≈61–72 MB, Python (CLR de .NET incluido) ≈68, navegador ≈35, renderer ≈23,
+    red + almacenamiento + crashpad ≈21. El nivel Low recorta sobre todo renderer y GPU, y se espera que pese más
+    tras horas de uso (una instancia vieja llegó a ≈290–305 MB), pero eso no está medido.
+  - Descartado: `TrySuspendAsync` no bajó nada más (209 → 209) y suspende el JS que usa `run_js`. Fusionar el
+    proceso GPU/red con el navegador exige reemplazar los argumentos que pywebview fija a mano y arriesga la
+    fluidez. `--disable-gpu` sacaría el proceso GPU pero pasa a dibujar por software.
+  - Para medir desde Claude: lanzar el widget con un acceso directo abierto por `explorer.exe`; si no, hereda el
+    %APPDATA% virtualizado y arranca sin dispositivos. Y en PowerShell, `FindWindow($null, …)` recibe "" y falla.
 - [x] Etapa 2: focos WiZ (pestaña "Cuarto", escenas verificadas con pruebas/wiz_escenas.py)
 - [x] Mango de Obi-Wan detallado (widget/ui/mango-obi-wan.svg, estilo metálico, a partir de la foto del sable real)
 - [ ] Ver el sentido real de FileTransfer download/upload
