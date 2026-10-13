@@ -43,7 +43,7 @@ Ventana (HTML/CSS/JS en WebView2 vía pywebview)
 Motor Python
    ├─ dispositivos/xeno.py      controlador del sable (protocolo de PROTOCOLO.md)
    ├─ dispositivos/sesion.py    conexión a demanda: cola, reintentos, desconexión por inactividad
-   ├─ dispositivos/registro.py  dispositivos guardados (JSON en %APPDATA%)
+   ├─ config.py                 dispositivos guardados y caché (JSON en %APPDATA%)
    └─ escritorio/               bandeja (pystray), atajo global (RegisterHotKey vía ctypes), autoarranque
 ```
 
@@ -51,17 +51,17 @@ Motor Python
   La interfaz se escribe en HTML, CSS y JS sin frameworks, y todos los recursos van incluidos en el programa (nada de CDN).
 - **Hilos:** la ventana corre en el hilo principal (lo exige pywebview). Un hilo aparte ejecuta un bucle `asyncio`
   donde vive todo el Bluetooth. El puente le pasa órdenes a ese bucle (`run_coroutine_threadsafe`), y los cambios
-  de estado se envían a la ventana con `window.evaluate_js` como eventos.
+  de estado se envían a la ventana con `window.run_js` como eventos.
 - **Extensible:** cada tipo de dispositivo es un módulo con la misma interfaz:
   `conectar`, `enviar`, `estado` y `buscar`. Los focos Wiz se agregan en la etapa 2 sin tocar el código del sable.
 - **Seguridad:** no hay servidor HTTP ni puertos abiertos. La ventana solo carga archivos locales del programa.
-  En disco solo se guarda la configuración (`%APPDATA%\XenoWidget\config.json`) y el registro de errores
-  (`%APPDATA%\XenoWidget\widget.log`). Las claves `HelloDamien` y `SaberOfDamien` son fijas del protocolo,
+  En disco solo se guarda la configuración (`%APPDATA%\DeskControl\config.json`) y el registro de errores
+  (`%APPDATA%\DeskControl\widget.log`). Las claves `HelloDamien` y `SaberOfDamien` son fijas del protocolo,
   no son credenciales del usuario.
 
 ## 4. Comportamiento en Windows
 
-- **Ventana:** sin bordes, con esquinas redondeadas al estilo de Windows 11 y fondo oscuro semitransparente, de unos 380×600 px.
+- **Ventana:** sin bordes, con esquinas redondeadas al estilo de Windows 11 y fondo oscuro sólido (`#1C1C20`; pywebview no soporta ventanas transparentes en Windows), de 380×600 px.
   Por defecto se ubica en la esquina superior izquierda del monitor vertical y recuerda la posición si el usuario la mueve.
   Se comporta como una ventana normal: otras ventanas pueden taparla.
 - **Atajo global:** **Ctrl + Shift + Espacio** la muestra (y la trae al frente) o la oculta.
@@ -150,22 +150,22 @@ El hilo de Bluetooth nunca bloquea la interfaz.
 - **Consumo:** medir la RAM total (proceso más WebView2) y la CPU en reposo con el widget visible y oculto.
   El objetivo es menos de 200 MB y alrededor de 0 % de CPU.
 
-## 9. Estructura de archivos propuesta
+## 9. Estructura de archivos
+
+La estructura detallada está en el plan de implementación
+(`docs/superpowers/plans/2026-10-12-widget-sable.md`). En resumen:
 
 ```
+desk_control.pyw          lanzador (lo usa el arranque con Windows)
 widget/
-  main.py                 arranque: ventana, bandeja, atajo, hilo asyncio
-  puente.py               API expuesta a JS
-  config.py               lectura y escritura de %APPDATA%\XenoWidget\config.json
-  dispositivos/
-    base.py               interfaz común de dispositivos
-    xeno.py               protocolo Xeno3 (evoluciona desde pruebas/xeno.py)
-    sesion.py             conexión a demanda, cola, reintentos, inactividad
-    registro.py           dispositivos guardados
-  escritorio/
-    bandeja.py  atajo.py  autoarranque.py
-  ui/
-    index.html  estilos.css  app.js  sable.js  rueda.js  iconos/
-tests/
-  sable_simulado.py  test_xeno.py  test_sesion.py  test_registro.py
+  main.py  bucle.py  puente.py  config.py  diagnostico.py
+  dispositivos/  protocolo.py  transporte.py  xeno.py  sesion.py  busqueda.py
+  escritorio/    atajo.py  instancia.py  autoarranque.py  ventana.py  bandeja.py
+  ui/            index.html  estilos.css  sable.css  util.js  app.js  sable.js  rueda.js  busqueda.js
+tests/           sable_simulado.py  ayudas.py  test_*.py
+scripts/         medir_consumo.ps1
 ```
+
+La "interfaz común de dispositivos" se materializa en la etapa 1 como `Transporte` (transporte.py) más
+`SesionSable` (sesion.py). La interfaz genérica para varios tipos de dispositivo se extrae en la etapa 2,
+cuando exista el segundo tipo (Wiz). Los dispositivos guardados viven en `config.py`.
