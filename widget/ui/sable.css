@@ -28,7 +28,9 @@
 .controles { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; transition: opacity .2s; }
 [data-conexion="conectando"] .controles { opacity: .55; }
 .fila-centro { display: flex; justify-content: center; padding: 4px 0; }
-.pwr { width: 58px; height: 58px; border-radius: 50%; font-size: 24px; background: var(--superficie-2); color: var(--texto-2); transition: all .3s; }
+.pwr { width: 58px; height: 58px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--superficie-2); color: var(--texto-2); transition: all .3s; }
+.icono-pwr { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
 .encendido .pwr { background: rgba(var(--c), .18); color: rgb(var(--c)); box-shadow: 0 0 18px rgba(var(--c), .45); }
 
 .muestras { display: flex; gap: 9px; flex-wrap: wrap; }
