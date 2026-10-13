@@ -10,7 +10,8 @@
 
 .escenario { display: flex; gap: 14px; padding: 4px 14px 14px; flex: 1; min-height: 0; }
 .sable { width: 64px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
-.hoja { width: 9px; flex: 1; max-height: 380px; border-radius: 999px; background: #fff; transform-origin: bottom;
+.hoja { width: 9px; flex: 1; max-height: 380px; border-radius: 999px 999px 4px 4px; background: #fff; transform-origin: bottom;
+  margin-bottom: -3px;  /* la hoja nace dentro de la copa del emisor */
   transform: scaleY(0); opacity: 0; transition: transform .35s cubic-bezier(.2, .8, .2, 1), opacity .2s, box-shadow .3s;
   box-shadow: 0 0 6px 2px rgba(var(--c), .9), 0 0 22px 6px rgba(var(--c), .55), 0 0 60px 14px rgba(var(--c), .25); }
 .encendido .hoja { transform: scaleY(1); opacity: 1; animation: zumbido 2.4s ease-in-out infinite; }
@@ -20,11 +21,9 @@
 [data-conexion="conectando"] .hoja { transform: scaleY(1); opacity: 1; background: transparent; box-shadow: none;
   border: 1px solid rgba(var(--c), .5); animation: respirar 1.4s ease-in-out infinite; }
 @keyframes respirar { 50% { border-color: rgba(var(--c), .1); box-shadow: 0 0 14px rgba(var(--c), .25); } }
-.mango { display: flex; flex-direction: column; align-items: center; }
-.emisor { width: 22px; height: 16px; border-radius: 3px 3px 2px 2px; background: linear-gradient(90deg, #4a4a50, #b8b8c0 45%, #55555b); }
-.grip { width: 18px; height: 70px; background: repeating-linear-gradient(180deg, #2b2b30 0 5px, #16161a 5px 8px);
-  border-left: 1px solid #44444a; border-right: 1px solid #111; }
-.pomo { width: 20px; height: 22px; border-radius: 2px 2px 6px 6px; background: linear-gradient(90deg, #3a3a3f, #8d8d95 45%, #4a4a50); }
+/* Mango de Obi-Wan (mango-obi-wan.svg, proporción 40×228) */
+.mango { width: 34px; height: 194px; flex: none; position: relative; z-index: 1; user-select: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .6)); }
 
 .controles { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; transition: opacity .2s; }
 [data-conexion="conectando"] .controles { opacity: .55; }

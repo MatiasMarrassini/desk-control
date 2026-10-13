@@ -31,8 +31,10 @@ class VistaSable {
     const escenario = util.el("div", "escenario");
 
     const sable = util.el("div", "sable");
-    const mango = util.el("div", "mango");
-    mango.append(util.el("div", "emisor"), util.el("div", "grip"), util.el("div", "pomo"));
+    const mango = util.el("img", "mango");
+    mango.src = "mango-obi-wan.svg";  // dibujado a partir del sable real (estilo metálico)
+    mango.alt = "";
+    mango.draggable = false;
     sable.append(util.el("div", "hoja"), mango);
 
     const controles = util.el("div", "controles");

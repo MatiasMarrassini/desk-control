@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 228" width="40" height="228">
+  <!-- Mango de Obi-Wan (estilo metálico realista), dibujado a partir de la foto del sable real.
+       De arriba abajo: emisor, cuello de cobre, anillo y cuello de oro, empuñadura con aletas,
+       cuerpo con placa de circuito, sección negra con botón de activación y pomo facetado. -->
+  <defs>
+    <linearGradient id="plata" x1="0" x2="1"><stop offset="0" stop-color="#5d5d63"/><stop offset=".28" stop-color="#f4f4f6"/><stop offset=".5" stop-color="#c3c3c9"/><stop offset=".8" stop-color="#7a7a80"/><stop offset="1" stop-color="#46464b"/></linearGradient>
+    <linearGradient id="oro" x1="0" x2="1"><stop offset="0" stop-color="#6e4f17"/><stop offset=".3" stop-color="#f6d98a"/><stop offset=".55" stop-color="#c99a3b"/><stop offset="1" stop-color="#5e4212"/></linearGradient>
+    <linearGradient id="cobre" x1="0" x2="1"><stop offset="0" stop-color="#43250f"/><stop offset=".35" stop-color="#c98a55"/><stop offset=".7" stop-color="#7d4f2c"/><stop offset="1" stop-color="#3b200c"/></linearGradient>
+    <linearGradient id="negro" x1="0" x2="1"><stop offset="0" stop-color="#030303"/><stop offset=".3" stop-color="#3d3d42"/><stop offset=".55" stop-color="#151517"/><stop offset="1" stop-color="#000"/></linearGradient>
+    <linearGradient id="placa" x1="0" x2="1"><stop offset="0" stop-color="#a8822f"/><stop offset=".5" stop-color="#f0d68f"/><stop offset="1" stop-color="#9c7629"/></linearGradient>
+  </defs>
+
+  <!-- 1. Emisor -->
+  <rect x="1.5" y="0" width="37" height="4" rx="1.5" fill="url(#plata)"/>
+  <path d="M5 4 H35 L33 25 H7 Z" fill="url(#plata)"/>
+  <rect x="9" y="25" width="22" height="9" fill="url(#plata)"/>
+  <rect x="9" y="25" width="22" height="1.2" fill="#000" opacity=".35"/>
+
+  <!-- 2. Cuello de cobre -->
+  <rect x="14" y="34" width="12" height="12" fill="url(#cobre)"/>
+
+  <!-- 3. Anillo de oro con ranuras y cuello -->
+  <path d="M9 46 H31 L32.5 50 L31 53 L32.5 56 L31 60 H9 L7.5 56 L9 53 L7.5 50 Z" fill="url(#oro)"/>
+  <g stroke="#5e4212" stroke-width=".6" opacity=".8">
+    <line x1="8" y1="50" x2="32" y2="50"/><line x1="8" y1="53" x2="32" y2="53"/><line x1="8" y1="56" x2="32" y2="56"/>
+  </g>
+  <rect x="13" y="60" width="14" height="16" fill="url(#oro)"/>
+
+  <!-- 4. Empuñadura negra con 9 aletas -->
+  <rect x="10.5" y="76" width="19" height="62" fill="#0b0b0c"/>
+  <g fill="url(#negro)">
+    <rect x="8" y="77" width="24" height="4.6" rx="1.4"/><rect x="8" y="83.8" width="24" height="4.6" rx="1.4"/>
+    <rect x="8" y="90.6" width="24" height="4.6" rx="1.4"/><rect x="8" y="97.4" width="24" height="4.6" rx="1.4"/>
+    <rect x="8" y="104.2" width="24" height="4.6" rx="1.4"/><rect x="8" y="111" width="24" height="4.6" rx="1.4"/>
+    <rect x="8" y="117.8" width="24" height="4.6" rx="1.4"/><rect x="8" y="124.6" width="24" height="4.6" rx="1.4"/>
+    <rect x="8" y="131.4" width="24" height="4.6" rx="1.4"/>
+  </g>
+
+  <!-- 5. Cuerpo plateado con placa de circuito, perno dorado y botón lateral -->
+  <rect x="9.5" y="138" width="21" height="34" fill="url(#plata)"/>
+  <rect x="16" y="141" width="8" height="28" rx=".8" fill="url(#placa)"/>
+  <g fill="#6b4c16">
+    <circle cx="17.6" cy="142.8" r=".8"/><circle cx="22.4" cy="142.8" r=".8"/>
+    <circle cx="17.6" cy="167.2" r=".8"/><circle cx="22.4" cy="167.2" r=".8"/>
+  </g>
+  <g stroke="#6b4c16" stroke-width=".5"><line x1="18" y1="145" x2="18" y2="165"/><line x1="22" y1="145" x2="22" y2="165"/></g>
+  <g fill="#6b4c16">
+    <rect x="18.8" y="146" width="2.4" height=".8"/><rect x="18.8" y="148" width="2.4" height=".8"/>
+    <rect x="18.8" y="150" width="2.4" height=".8"/><rect x="18.8" y="152" width="2.4" height=".8"/>
+    <rect x="18.8" y="154" width="2.4" height=".8"/><rect x="18.8" y="156" width="2.4" height=".8"/>
+    <rect x="18.8" y="158" width="2.4" height=".8"/><rect x="18.8" y="160" width="2.4" height=".8"/>
+    <rect x="18.8" y="162" width="2.4" height=".8"/>
+  </g>
+  <circle cx="9" cy="142" r="1.6" fill="url(#oro)"/>
+  <rect x="6.5" y="152" width="3.5" height="6" rx="1" fill="url(#plata)"/>
+
+  <!-- 6. Sección negra con botón de activación -->
+  <rect x="10" y="172" width="20" height="29" fill="url(#negro)"/>
+  <g stroke="#000" stroke-width=".7" opacity=".9">
+    <line x1="14" y1="172" x2="14" y2="201"/><line x1="18" y1="172" x2="18" y2="201"/>
+    <line x1="22" y1="172" x2="22" y2="201"/><line x1="26" y1="172" x2="26" y2="201"/>
+  </g>
+  <rect x="29.5" y="180" width="5" height="10" rx="1.5" fill="#111"/>
+  <rect x="30" y="181.5" width="1.4" height="7" rx=".7" fill="#666"/>
+
+  <!-- 7. Pomo facetado -->
+  <path d="M10 201 H30 L33.5 207 V221 L30 227.5 H10 L6.5 221 V207 Z" fill="url(#plata)"/>
+  <g opacity=".45">
+    <path d="M10 201 L13 207 V221 L10 227.5 L6.5 221 V207 Z" fill="#2f2f34"/>
+    <path d="M30 201 L27 207 V221 L30 227.5 L33.5 221 V207 Z" fill="#2f2f34"/>
+  </g>
+  <line x1="6.5" y1="207" x2="33.5" y2="207" stroke="#fff" stroke-width=".5" opacity=".5"/>
+  <line x1="6.5" y1="221" x2="33.5" y2="221" stroke="#000" stroke-width=".5" opacity=".4"/>
+</svg>
